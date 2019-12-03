@@ -68,6 +68,9 @@ public class MyStrategy {
         //беги за базукой если есть возможность
         targetPos = goToRocketIfCan(unit, game, targetPos);
 
+        PathFinder pf = new PathFinder();
+        pf.getPath(unit.getPosition(),nearestWeapon.getPosition(),game.getLevel());
+
         debug.draw(new CustomData.Log("Target pos: " + targetPos));
         Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float debugTargetPoint = new Vec2Float((float) targetPos.getX(), (float) targetPos.getY());
