@@ -1,18 +1,18 @@
 import model.*;
 
 public class MyStrategy {
-    boolean iSearchRocket = false;
-    double EPS = 1;
+    private boolean iSearchRocket = false;
+    private double EPS = 1;
 
-    static double distanceSqr(Vec2Double a, Vec2Double b) {
+    private static double distanceSqr(Vec2Double a, Vec2Double b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
 
-    static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game) {
+    private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game) {
 
         if (unit.getWeapon() != null && distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) > 5 &&
                 unit.getWeapon() != null && nearestEnemy.getWeapon() != null) {
-            if ((game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
+            return (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
                     (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
                     (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
                     (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() - 1)] == Tile.WALL) ||
@@ -20,13 +20,13 @@ public class MyStrategy {
                     (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
                     (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
                     (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] == Tile.WALL)) {
-                return true;
-            } else {
-                return false;
-            }
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] == Tile.WALL);
         }
         return false;
+    }
+
+    Vec2Double getMoveToAspirine(){
+    return new Vec2Double();
     }
 
     /**
@@ -62,6 +62,7 @@ public class MyStrategy {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
 
+        getMoveToAspirine();
         targetPos = savePlayer(unit, game, nearestEnemy, targetPos);
 
         //беги за базукой если есть возможность

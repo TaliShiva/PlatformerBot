@@ -1,7 +1,5 @@
 package model;
 
-import util.StreamUtil;
-
 public enum Tile {
     EMPTY(0),
     WALL(1),
@@ -12,4 +10,14 @@ public enum Tile {
     Tile(int discriminant) {
       this.discriminant = discriminant;
     }
+
+    public void setMoveAction(MoveAction.state moveAction) {
+        Tile.moveAction.setTileState(moveAction);
+    }
+
+    public MoveAction getMoveAction() {
+        return moveAction;
+    }
+
+    private static MoveAction moveAction = new MoveAction();
 }
