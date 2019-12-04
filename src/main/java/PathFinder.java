@@ -17,17 +17,18 @@ class PathFinder {
     }
 
 
-    public Tile[] getPath(Vec2Double startPosition, Vec2Double finishPosition) {
-        final Tile startTile = tiles[(int) startPosition.getX()][(int) startPosition.getY()];
-        Point startPoint = new Point(startTile);
-
-        visitedPoints.add(startPoint); // поместили начальный тайл
-        while (!noVisitedPoints.isEmpty()) {
-            for (Tile neighbour : startTile.getNeighbours()) {
-
-            }
-        }
-    }
+//    public Tile[] getPath(Vec2Double startPosition, Vec2Double finishPosition) {
+//        final Tile startTile = tiles[(int) startPosition.getX()][(int) startPosition.getY()];
+//        Point startPoint = new Point(startTile);
+//
+//        visitedPoints.add(startPoint); // поместили начальный тайл
+////        while (!noVisitedPoints.isEmpty()) {
+////            for (Tile neighbour : startTile.getNeighbours()) {
+////
+////            }
+////        }
+//        return tiles;
+//    }
 
     // точка нужна, чтобы по ней получить в итоге путь до стартовой точки
     class Point {

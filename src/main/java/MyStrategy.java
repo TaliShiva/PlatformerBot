@@ -1,7 +1,5 @@
 import model.*;
 
-import java.util.ArrayList;
-
 public class MyStrategy {
     private boolean iSearchRocket = false;
     private double EPS = 1;
@@ -27,9 +25,6 @@ public class MyStrategy {
         return false;
     }
 
-    Vec2Double getMoveToAspirine() {
-        return new Vec2Double();
-    }
 
     /**
      * @param unit - наш персонаж
@@ -66,7 +61,6 @@ public class MyStrategy {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
 
-        getMoveToAspirine();
         targetPos = savePlayer(unit, game, nearestEnemy, targetPos);
 
         //беги за базукой если есть возможность
@@ -99,6 +93,7 @@ public class MyStrategy {
             jump = true;
         }
 
+        targetPos = backFromEnemy(nearestEnemy, unit, game);
 
         UnitAction action = new UnitAction();
         double signum = Math.signum(targetPos.getX() - unit.getPosition().getX());
@@ -112,6 +107,7 @@ public class MyStrategy {
         if (isStupidShot(unit, nearestEnemy, game)) {
             action.setShoot(false);
         }
+
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.PISTOL) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestWeapon.getPosition() != null &&
@@ -123,6 +119,22 @@ public class MyStrategy {
 
         action.setPlantMine(false);
         return action;
+    }
+
+    private Vec2Double backFromEnemy(Unit nearestEnemy, Unit unit, Game game) {
+        Vec2Double targetPos = new Vec2Double();
+        Vec2Double enemyPosition = nearestEnemy.getPosition();
+        Vec2Double unitPosition = unit.getPosition();
+        if (distanceSqr(unitPosition, enemyPosition) <= 15) {
+            if (enemyPosition.getX() > unitPosition.getX()) {// враг правее
+                targetPos.setX(enemyPosition.getX() - 20);
+                targetPos.setY(enemyPosition.getY() + 20);
+            } else if (enemyPosition.getX() < unitPosition.getX()) {//враг левее
+                targetPos.setX(enemyPosition.getX() + 20);
+                targetPos.setY(enemyPosition.getY() + 20);
+            }
+        }
+        return targetPos;
     }
 
     private Vec2Double savePlayer(Unit unit, Game game, Unit nearestEnemy, Vec2Double targetPos) {
