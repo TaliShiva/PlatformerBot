@@ -1,5 +1,6 @@
 package model;
 
+import java.util.ArrayList;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -25,7 +26,7 @@ public enum Tile {
 
     private static MoveAction moveAction = new MoveAction();
 
-    public void setNeighbours(Set<Tile> neighbours) {
+    public void setNeighbours(ArrayList<Tile> neighbours) {
         this.neighbours = neighbours;
     }
 
@@ -34,9 +35,9 @@ public enum Tile {
             this.neighbours.add(neighbour);
     }
 
-    public Set<Tile> getNeighbours() {
+    public ArrayList<Tile> getNeighbours() {
         return neighbours;
     }
+    private ArrayList<Tile> neighbours = new ArrayList<>();
 
-    private Set<Tile> neighbours = new TreeSet<>();
 }

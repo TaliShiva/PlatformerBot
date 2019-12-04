@@ -1,5 +1,7 @@
 import model.*;
 
+import java.util.ArrayList;
+
 public class MyStrategy {
     private boolean iSearchRocket = false;
     private double EPS = 1;
@@ -25,8 +27,8 @@ public class MyStrategy {
         return false;
     }
 
-    Vec2Double getMoveToAspirine(){
-    return new Vec2Double();
+    Vec2Double getMoveToAspirine() {
+        return new Vec2Double();
     }
 
     /**
@@ -35,6 +37,8 @@ public class MyStrategy {
      * @return - объект храняющий действие игрока
      */
     public UnitAction getAction(Unit unit, Game game, Debug debug) {
+
+
         Unit nearestEnemy = null;
         for (Unit other : game.getUnits()) {
             if (other.getPlayerId() != unit.getPlayerId()) {
@@ -68,8 +72,8 @@ public class MyStrategy {
         //беги за базукой если есть возможность
         targetPos = goToRocketIfCan(unit, game, targetPos);
 
-        PathFinder pf = new PathFinder();
-        pf.getPath(unit.getPosition(),nearestWeapon.getPosition(),game.getLevel());
+        //  PathFinder pf = new PathFinder();
+        //   pf.getPath(unit.getPosition(),nearestWeapon.getPosition(),game.getLevel());
 
         debug.draw(new CustomData.Log("Target pos: " + targetPos));
         Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
@@ -122,7 +126,7 @@ public class MyStrategy {
     }
 
     private Vec2Double savePlayer(Unit unit, Game game, Unit nearestEnemy, Vec2Double targetPos) {
-        if (nearestEnemy != null && (nearestEnemy.getHealth() - unit.getHealth()) >= 23 || unit.getHealth() <= 20) {
+        if (nearestEnemy != null && (nearestEnemy.getHealth() - unit.getHealth()) >= 23 || unit.getHealth() <= 45) {
             for (LootBox lootBox : game.getLootBoxes()) {
                 if (lootBox.getItem() instanceof Item.HealthPack && distanceSqr(unit.getPosition(), lootBox.getPosition()) <= 30) { // если лутбокс это аптечка, то
                     targetPos = lootBox.getPosition();
