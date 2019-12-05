@@ -12,22 +12,29 @@ public class MyStrategy {
         if (Math.abs(unit.getPosition().getY() - nearestEnemy.getPosition().getY()) < 3) // если игроки примерно на одной выcоте
         {
             int emptyTilesCounter = 0;
-            final double tilesCount = Math.abs((int) nearestEnemy.getPosition().getX() - unit.getPosition().getX());
             if (unit.getPosition().getX() < nearestEnemy.getPosition().getX()) { // если наш игрок левее и дистанция между нами больше двух тайлов и рядом
                 // нет препятствий , то стреляем
-                for (int i = (int) unit.getPosition().getX() + 1; i < (int) nearestEnemy.getPosition().getX(); i++) {
-                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + i)][(int) (unit.getPosition().getY())] == Tile.EMPTY && emptyTilesCounter <= 5) {
-                        return false;
+                for (int i = 0; i < 5; i++) {
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + i)][(int) (unit.getPosition().getY())] == Tile.WALL) {
+                        break;
                     }
-                    emptyTilesCounter++;
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + i)][(int) (unit.getPosition().getY())] == Tile.EMPTY) {
+                        emptyTilesCounter++;
+                    }
                 }
             } else if (unit.getPosition().getX() > nearestEnemy.getPosition().getX()) {
-                for (int i = (int) unit.getPosition().getX() - 1; i > (int) nearestEnemy.getPosition().getX(); i--) {
-                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - i)][(int) (unit.getPosition().getY())] == Tile.EMPTY && emptyTilesCounter <= 5) {
-                        return false;
+                for (int i = 0; i < 5; i++) {
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - i)][(int) (unit.getPosition().getY())] == Tile.WALL) {
+                        break;
                     }
-                    emptyTilesCounter++;
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - i)][(int) (unit.getPosition().getY())] == Tile.EMPTY) {
+                        emptyTilesCounter++;
+                    }
+
                 }
+            }
+            if (emptyTilesCounter == 5) {
+                return false;
             }
         }
 
@@ -94,54 +101,36 @@ public class MyStrategy {
         } else if (nearestEnemy != null) {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
-
-
-        //беги за базукой если есть возможность
-        targetPos = goToRocketIfCan(unit, game, targetPos);
-        //спасайся
-        targetPos = savePlayer(unit, game, nearestEnemy, targetPos);
-        //дистанцируйся от врага
-        //targetPos = backFromEnemy(targetPos, nearestEnemy, unit, game);
-
+        targetPos = selectNeedStrategy(unit, game, nearestEnemy, targetPos);
 
         debug.draw(new CustomData.Log("Target pos: " + targetPos));
         Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
 
+        UnitAction action = new UnitAction();
+
+        boolean jump = getJump(unit, game, nearestEnemy, targetPos);
+
+        double signum = Math.signum(targetPos.getX() - unit.getPosition().getX());
+        action.setVelocity(signum * game.getProperties().getUnitMaxHorizontalSpeed());
+        //дистанцируйся от врага
+        backFromEnemy(nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed());
+
+        action.setJump(jump); // патч на прыжки
+        jumpDownIfNeedIt(unit, game, targetPos, action);
+
 
         Vec2Double aim = new Vec2Double(0, 0);
         if (nearestEnemy != null) {
-            aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
+            aim = new Vec2Double(nearestEnemy.getPosition().getX() - 0.5 - unit.getPosition().getX(),
                     nearestEnemy.getPosition().getY() - unit.getPosition().getY());
             Vec2Float debugAimPoint = new Vec2Float((float) aim.getX(), (float) aim.getY());
             debug.draw(new CustomData.Line(debugUnitPoint, debugAimPoint, 0.2f, new ColorFloat(0, 100, 0, 100)));
         }
-
-
-        boolean jump = targetPos.getY() > unit.getPosition().getY();
-        if (targetPos.getX() > unit.getPosition().getX() && game.getLevel()
-                .getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] == Tile.WALL) {
-            jump = true;
-        }
-        if (targetPos.getX() < unit.getPosition().getX() && game.getLevel()
-                .getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) {
-            jump = true;
-        }
-        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) <= 20) {
-            jump = true;
-        }
-
-
-        UnitAction action = new UnitAction();
-        double signum = Math.signum(targetPos.getX() - unit.getPosition().getX());
-        action.setVelocity(signum * game.getProperties().getUnitMaxHorizontalSpeed());
-        action.setJump(jump);
-
-        // патч на прыжки, если цель снизу
-        jumpDownIfNeedIt(unit, game, targetPos, action);
-
+        aimPatch(unit, nearestEnemy, aim, game); // конфликтует с проверкой тупости выстрела
         action.setAim(aim);
-        action.setShoot(true);
 
+
+        action.setShoot(true);
         if (isStupidShot(unit, nearestEnemy, game)) {
             action.setShoot(false);
         }
@@ -154,6 +143,38 @@ public class MyStrategy {
         debug.draw(new CustomData.Line(debugUnitPoint, debugTargetPoint, 0.2f, new ColorFloat(100, 0, 0, 100)));
 
         return action;
+    }
+
+    private boolean getJump(Unit unit, Game game, Unit nearestEnemy, Vec2Double targetPos) {
+        boolean jump = targetPos.getY() > unit.getPosition().getY();
+        if (targetPos.getX() > unit.getPosition().getX() && game.getLevel()
+                .getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] == Tile.WALL) {
+            jump = true;
+        }
+        if (targetPos.getX() < unit.getPosition().getX() && game.getLevel()
+                .getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) {
+            jump = true;
+        }
+        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) <= 5) {
+            jump = true;
+        }
+        return jump;
+    }
+
+    private void aimPatch(Unit unit, Unit nearestEnemy, Vec2Double aim, Game game) {
+        if (nearestEnemy.isOnGround()) {
+                aim.setY(nearestEnemy.getPosition().getY() - 1 - unit.getPosition().getY());
+            }
+    }
+
+    private Vec2Double selectNeedStrategy(Unit unit, Game game, Unit nearestEnemy, Vec2Double targetPos) {
+        //беги за базукой если есть возможность
+        targetPos = goToRocketIfCan(unit, game, targetPos);
+        //спасайся
+        targetPos = savePlayer(unit, game, nearestEnemy, targetPos);
+
+
+        return targetPos;
     }
 
     private void weaponSwapping(Unit unit, LootBox nearestWeapon, Vec2Double targetPos, UnitAction action) {
@@ -169,30 +190,30 @@ public class MyStrategy {
 
     private void jumpDownIfNeedIt(Unit unit, Game game, Vec2Double targetPos, UnitAction action) {
         if (game.getLevel().getTiles()[(int) unit.getPosition().getX()][(int) unit.getPosition().getY() - 1] == Tile.PLATFORM &&
-                targetPos.getY() < unit.getPosition().getY()) {
+                targetPos.getY() < unit.getPosition().getY() && Math.abs((int) targetPos.getX() - (int) unit.getPosition().getX()) < 3) {
             action.setJumpDown(true);
         } else {
             action.setJumpDown(false);
         }
     }
 
-    private Vec2Double backFromEnemy(Vec2Double targetPos, Unit nearestEnemy, Unit unit, Game game) {
+    private void backFromEnemy(Unit nearestEnemy, Unit unit, UnitAction action, Double speed) {
         Vec2Double enemyPosition = nearestEnemy.getPosition();
         Vec2Double unitPosition = unit.getPosition();
-        if (distanceSqr(unitPosition, enemyPosition) <= 19) {
+
+        if (distanceSqr(unitPosition, enemyPosition) <= 9 && nearestEnemy.getWeapon() != null) {
             if (enemyPosition.getX() > unitPosition.getX()) {// враг правее
-                targetPos.setX(enemyPosition.getX() - 39);
+                action.setVelocity(-1 * speed);
             } else if (enemyPosition.getX() < unitPosition.getX()) {//враг левее
-                targetPos.setX(enemyPosition.getX() + 39);
+                action.setVelocity(speed);
             }
         }
-        return targetPos;
     }
 
     private Vec2Double savePlayer(Unit unit, Game game, Unit nearestEnemy, Vec2Double targetPos) {
-        if (nearestEnemy != null && (nearestEnemy.getHealth() - unit.getHealth()) >= 23 || unit.getHealth() <= 30) {
+        if (nearestEnemy != null && (nearestEnemy.getHealth() - unit.getHealth()) >= 30 || unit.getHealth() <= 45) {
             for (LootBox lootBox : game.getLootBoxes()) {
-                if ((lootBox.getItem() instanceof Item.HealthPack) && distanceSqr(unit.getPosition(), lootBox.getPosition()) <= 55) { // если лутбокс это аптечка и она
+                if ((lootBox.getItem() instanceof Item.HealthPack) && distanceSqr(unit.getPosition(), lootBox.getPosition()) <= 20) { // если лутбокс это аптечка и она
                     // относительно недалеко , то бежим к ней
                     targetPos = lootBox.getPosition();
                 }

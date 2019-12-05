@@ -5,7 +5,8 @@ import util.StreamUtil;
 
 public class Level {
     private model.Tile[][] tiles;
-
+    private double tileWidth;
+    private double tileHeigth;
     public model.Tile[][] getTiles() {
         return tiles;
     }
@@ -24,6 +25,7 @@ public class Level {
     public static Level readFrom(java.io.InputStream stream) throws java.io.IOException {
         Level result = new Level();
         result.tiles = new model.Tile[StreamUtil.readInt(stream)][];
+//        int tilesCountOnWidth = result.tiles[0].length;
         for (int i = 0; i < result.tiles.length; i++) {
             result.tiles[i] = new model.Tile[StreamUtil.readInt(stream)];
             for (int j = 0; j < result.tiles[i].length; j++) {
