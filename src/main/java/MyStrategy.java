@@ -9,28 +9,46 @@ public class MyStrategy {
     }
 
     private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game) {
-
-        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) > 30) {
-            return (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() - 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() - 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] == Tile.WALL);
+        if (Math.abs(unit.getPosition().getY() - nearestEnemy.getPosition().getY()) < 3) // если игроки примерно на одной выcоте
+        {
+            if (unit.getPosition().getX() < nearestEnemy.getPosition().getX()) { // если наш игрок левее и дистанция между нами больше двух тайлов и рядом
+                // нет препятствий , то стреляем
+                for (int i = (int) unit.getPosition().getX()+1; i < (int) nearestEnemy.getPosition().getX(); i++) {
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + i)][(int) (unit.getPosition().getY())] == Tile.EMPTY) {
+                        return false;
+                    }
+                }
+            } else if (unit.getPosition().getX() > nearestEnemy.getPosition().getX()) {
+                for (int i = (int) unit.getPosition().getX()-1; i > (int) nearestEnemy.getPosition().getX(); i--) {
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - i)][(int) (unit.getPosition().getY())] == Tile.EMPTY) {
+                        return false;
+                    }
+                }
+            }
         }
-        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) > 20) {
-            return (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() - 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() - 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] == Tile.WALL) ||
-                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] == Tile.WALL);
+
+        final double distanceBetweenPlayers = distanceSqr(unit.getPosition(), nearestEnemy.getPosition());
+        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceBetweenPlayers > 25) {
+            return (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY);
+        }
+        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && distanceBetweenPlayers > 25) {
+            return (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
+                    (game.getLevel().getTiles()[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY);
         }
 
 
@@ -74,16 +92,15 @@ public class MyStrategy {
         }
 
 
-
         //беги за базукой если есть возможность
         targetPos = goToRocketIfCan(unit, game, targetPos);
+        //дистанцируйся от врага
+        targetPos = backFromEnemy(targetPos, nearestEnemy, unit, game);
+        //спасайся
         targetPos = savePlayer(unit, game, nearestEnemy, targetPos);
-        //  PathFinder pf = new PathFinder();
-        //   pf.getPath(unit.getPosition(),nearestWeapon.getPosition(),game.getLevel());
 
         debug.draw(new CustomData.Log("Target pos: " + targetPos));
         Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
-
 
 
         Vec2Double aim = new Vec2Double(0, 0);
@@ -91,7 +108,7 @@ public class MyStrategy {
             aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
                     nearestEnemy.getPosition().getY() - unit.getPosition().getY());
             Vec2Float debugAimPoint = new Vec2Float((float) aim.getX(), (float) aim.getY());
-            debug.draw(new CustomData.Line(debugUnitPoint,debugAimPoint,0.2f, new ColorFloat(0, 100, 0, 100)));
+            debug.draw(new CustomData.Line(debugUnitPoint, debugAimPoint, 0.2f, new ColorFloat(0, 100, 0, 100)));
         }
 
 
@@ -104,17 +121,17 @@ public class MyStrategy {
                 .getTiles()[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] == Tile.WALL) {
             jump = true;
         }
-        if(distanceSqr(unit.getPosition(),nearestEnemy.getPosition()) <= 20){
+        if (distanceSqr(unit.getPosition(), nearestEnemy.getPosition()) <= 20) {
             jump = true;
         }
 
-        targetPos = backFromEnemy(targetPos, nearestEnemy, unit, game);
 
         UnitAction action = new UnitAction();
         double signum = Math.signum(targetPos.getX() - unit.getPosition().getX());
         action.setVelocity(signum * game.getProperties().getUnitMaxHorizontalSpeed());
         action.setJump(jump);
 
+        // патч на прыжки, если цель снизу
         jumpDownIfNeedIt(unit, game, targetPos, action);
 
         action.setAim(aim);
@@ -124,14 +141,7 @@ public class MyStrategy {
             action.setShoot(false);
         }
 
-        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.PISTOL) {
-            action.setSwapWeapon(true);
-        } else if (unit.getWeapon() != null && nearestWeapon.getPosition() != null &&
-                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && iSearchRocket && (distanceSqr(unit.getPosition(), targetPos)) <= EPS) {
-            action.setSwapWeapon(true);
-        } else {
-            action.setSwapWeapon(false);
-        }
+        weaponSwapping(unit, nearestWeapon, targetPos, action);
 
         action.setPlantMine(false);
 
@@ -141,11 +151,22 @@ public class MyStrategy {
         return action;
     }
 
+    private void weaponSwapping(Unit unit, LootBox nearestWeapon, Vec2Double targetPos, UnitAction action) {
+        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.PISTOL) {
+            action.setSwapWeapon(true);
+        } else if (unit.getWeapon() != null && nearestWeapon.getPosition() != null &&
+                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && iSearchRocket && (distanceSqr(unit.getPosition(), targetPos)) <= EPS) {
+            action.setSwapWeapon(true);
+        } else {
+            action.setSwapWeapon(false);
+        }
+    }
+
     private void jumpDownIfNeedIt(Unit unit, Game game, Vec2Double targetPos, UnitAction action) {
-        if(game.getLevel().getTiles()[(int)unit.getPosition().getX()][(int)unit.getPosition().getY()-1] == Tile.PLATFORM &&
-        targetPos.getY()<unit.getPosition().getY()) {
+        if (game.getLevel().getTiles()[(int) unit.getPosition().getX()][(int) unit.getPosition().getY() - 1] == Tile.PLATFORM &&
+                targetPos.getY() < unit.getPosition().getY()) {
             action.setJumpDown(true);
-        }else {
+        } else {
             action.setJumpDown(false);
         }
     }
@@ -153,7 +174,7 @@ public class MyStrategy {
     private Vec2Double backFromEnemy(Vec2Double targetPos, Unit nearestEnemy, Unit unit, Game game) {
         Vec2Double enemyPosition = nearestEnemy.getPosition();
         Vec2Double unitPosition = unit.getPosition();
-        if (distanceSqr(unitPosition, enemyPosition) <= 18) {
+        if (distanceSqr(unitPosition, enemyPosition) <= 19) {
             if (enemyPosition.getX() > unitPosition.getX()) {// враг правее
                 targetPos.setX(enemyPosition.getX() - 39);
             } else if (enemyPosition.getX() < unitPosition.getX()) {//враг левее
@@ -164,9 +185,10 @@ public class MyStrategy {
     }
 
     private Vec2Double savePlayer(Unit unit, Game game, Unit nearestEnemy, Vec2Double targetPos) {
-        if (nearestEnemy != null && (nearestEnemy.getHealth() - unit.getHealth()) >= 23 || unit.getHealth() <= 45) {
+        if (nearestEnemy != null && (nearestEnemy.getHealth() - unit.getHealth()) >= 23 || unit.getHealth() <= 30) {
             for (LootBox lootBox : game.getLootBoxes()) {
-                if ((lootBox.getItem() instanceof Item.HealthPack) && distanceSqr(unit.getPosition(), lootBox.getPosition()) <= 75) { // если лутбокс это аптечка, то
+                if ((lootBox.getItem() instanceof Item.HealthPack) && distanceSqr(unit.getPosition(), lootBox.getPosition()) <= 55) { // если лутбокс это аптечка и она
+                    // относительно недалеко , то бежим к ней
                     targetPos = lootBox.getPosition();
                 }
             }
