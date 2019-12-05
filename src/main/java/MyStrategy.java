@@ -11,18 +11,22 @@ public class MyStrategy {
     private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game) {
         if (Math.abs(unit.getPosition().getY() - nearestEnemy.getPosition().getY()) < 3) // если игроки примерно на одной выcоте
         {
+            int emptyTilesCounter = 0;
+            final double tilesCount = Math.abs((int) nearestEnemy.getPosition().getX() - unit.getPosition().getX());
             if (unit.getPosition().getX() < nearestEnemy.getPosition().getX()) { // если наш игрок левее и дистанция между нами больше двух тайлов и рядом
                 // нет препятствий , то стреляем
-                for (int i = (int) unit.getPosition().getX()+1; i < (int) nearestEnemy.getPosition().getX(); i++) {
-                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + i)][(int) (unit.getPosition().getY())] == Tile.EMPTY) {
+                for (int i = (int) unit.getPosition().getX() + 1; i < (int) nearestEnemy.getPosition().getX(); i++) {
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() + i)][(int) (unit.getPosition().getY())] == Tile.EMPTY && emptyTilesCounter <= 5) {
                         return false;
                     }
+                    emptyTilesCounter++;
                 }
             } else if (unit.getPosition().getX() > nearestEnemy.getPosition().getX()) {
-                for (int i = (int) unit.getPosition().getX()-1; i > (int) nearestEnemy.getPosition().getX(); i--) {
-                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - i)][(int) (unit.getPosition().getY())] == Tile.EMPTY) {
+                for (int i = (int) unit.getPosition().getX() - 1; i > (int) nearestEnemy.getPosition().getX(); i--) {
+                    if (game.getLevel().getTiles()[(int) (unit.getPosition().getX() - i)][(int) (unit.getPosition().getY())] == Tile.EMPTY && emptyTilesCounter <= 5) {
                         return false;
                     }
+                    emptyTilesCounter++;
                 }
             }
         }
@@ -94,10 +98,11 @@ public class MyStrategy {
 
         //беги за базукой если есть возможность
         targetPos = goToRocketIfCan(unit, game, targetPos);
-        //дистанцируйся от врага
-        targetPos = backFromEnemy(targetPos, nearestEnemy, unit, game);
         //спасайся
         targetPos = savePlayer(unit, game, nearestEnemy, targetPos);
+        //дистанцируйся от врага
+        //targetPos = backFromEnemy(targetPos, nearestEnemy, unit, game);
+
 
         debug.draw(new CustomData.Log("Target pos: " + targetPos));
         Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
