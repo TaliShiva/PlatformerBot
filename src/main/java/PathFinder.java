@@ -1,19 +1,19 @@
-import model.Level;
-import model.Tile;
-import model.Vec2Double;
+import model.*;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 class PathFinder {
-    private List<Point> visitedPoints = new ArrayList<>();
-    private List<Point> noVisitedPoints = new ArrayList<>();
+    private List<Vertex> visitedVertices = new ArrayList<>();
+    private List<Vertex> noVisitedVertices = new ArrayList<>();
     Tile[][] tiles;
-    Grid grid;
+    Graph graph;
+
     //конструктор в котором создаётся один раз сетка точек для поиска пути
-    PathFinder(Level lvl) {
+    PathFinder(Level lvl) throws IOException {
         tiles = lvl.getTiles();
-        grid = new Grid();
+//        graph = new Graph();
     }
 
 
@@ -31,31 +31,98 @@ class PathFinder {
 //    }
 
     // точка нужна, чтобы по ней получить в итоге путь до стартовой точки
-    class Point {
+    class Vertex {
         //первый элемент
-        private List<Tile> parents = new ArrayList<>();
+
         private Tile tile;
 
-        Point(Tile startTile) {
+        Vertex(Tile startTile) {
             tile = startTile;
         }
 
-        public void setParent(Tile parent) {
-            parents.add(parent);
-        }
+
     }
-    class Grid{
-    List<List<Point>> moveGraph = new ArrayList<>();
 
-    Grid(){
-        for (int i = 1; i < tiles.length - 1; i++) {
-            for (int j = 1; j < tiles[i].length - 1; j++) {
 
+    class Graph {
+        List<List<Vertex>> moveGraph = new ArrayList<>();
+
+
+        /**
+         * Создание графа доступных для движений точек, с учётом коллизий от стен
+         */
+        Graph(Game game, Unit unit) throws IOException {
+            double unitJumpLength = game.getProperties().getUnitJumpSpeed() * game.getProperties().getUnitJumpTime();
+            // если мы будет получать оставшуюся длиину прыжка, то можно сделать так, у вершины есть движение наверх, пока длина больше либо равна 1
+            for (int i = 1; i < tiles.length - 1; i++) {
+                for (int j = 1; j < tiles[i].length - 1; j++) {
+                    switch (tiles[i][j]) {
+                        case EMPTY:
+                            if (tiles[i][j - 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i][j - 1]);
+                            }
+                            if (tiles[i + 1][j - 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i + 1][j - 1]);
+                            }
+                            if (tiles[i - 1][j - 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i - 1][j - 1]);
+                            }
+                            if (unitJumpLength >= 1) {
+                                if (tiles[i][j + 1] != Tile.WALL) {
+                                    tiles[i][j].setNeighbour(tiles[i][j + 1]);
+                                }
+                                if (tiles[i + 1][j + 1] != Tile.WALL) {
+                                    tiles[i][j].setNeighbour(tiles[i + 1][j + 1]);
+                                }
+                                if (tiles[i - 1][j + 1] != Tile.WALL) {
+                                    tiles[i][j].setNeighbour(tiles[i - 1][j + 1]);
+                                }
+                            }
+                            break;
+                        case WALL:
+                            break;
+                        case LADDER:
+                            if (tiles[i][j + 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i][j + 1]);
+                            }
+                            if (tiles[i + 1][j + 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i + 1][j + 1]);
+                            }
+                            if (tiles[i + 1][j] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i + 1][j]);
+                            }
+                            if (tiles[i + 1][j - 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i + 1][j - 1]);
+                            }
+                            if (tiles[i][j - 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i][j - 1]);
+                            }
+                            if (tiles[i - 1][j - 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i - 1][j - 1]);
+                            }
+                            if (tiles[i - 1][j] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i - 1][j]);
+                            }
+                            if (tiles[i - 1][j + 1] != Tile.WALL) {
+                                tiles[i][j].setNeighbour(tiles[i - 1][j + 1]);
+                            }
+                            break;
+                        case PLATFORM:
+                            tiles[i][j + 1].setNeighbour(tiles[i + 1][j + 1]);
+                            tiles[i][j + 1].setNeighbour(tiles[i - 1][j + 1]);
+                            tiles[i][j + 1].setNeighbour(tiles[i][j + 2]);
+                            break;
+
+                        case JUMP_PAD:
+                            break;
+                        default:
+                            throw new java.io.IOException("Unexpected discriminant value");
+                    }
+                }
             }
         }
     }
-    }
 
 }
-// сперва ни одной ноды не посещали
+
 

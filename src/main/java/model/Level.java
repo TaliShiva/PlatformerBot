@@ -51,43 +51,9 @@ public class Level {
             }
         }
 
-        //все тайлы существуют, и теперь мы пробегаемся по ним и записываем в них мувы которые в них можно делать
-        inputMovesInTiles(result);
-
         return result;
     }
 
-    private static void inputMovesInTiles(Level result) throws java.io.IOException {
-        for (int i = 1; i < result.tiles.length - 1; i++) {
-            for (int j = 1; j < result.tiles[i].length - 1; j++) {
-                switch (result.tiles[i][j]) {
-                    case EMPTY:
-                        result.tiles[i][j + 1].setMoveAction(MoveAction.state.LEFTMOVE);
-                        result.tiles[i][j + 1].setMoveAction(MoveAction.state.RIGHTMOVE);
-
-                        break;
-                    case WALL:
-                        break;
-                    case PLATFORM:
-                        result.tiles[i][j + 1].setMoveAction(MoveAction.state.LEFTMOVE);
-                        result.tiles[i][j + 1].setMoveAction(MoveAction.state.RIGHTMOVE);
-                        result.tiles[i][j + 1].setMoveAction(MoveAction.state.JUMP);
-                        break;
-                    case LADDER:
-                        result.tiles[i][j].setMoveAction(MoveAction.state.JUMPDOWN);
-                        result.tiles[i][j].setMoveAction(MoveAction.state.JUMP);
-                        result.tiles[i][j].setMoveAction(MoveAction.state.LEFTMOVE);
-                        result.tiles[i][j].setMoveAction(MoveAction.state.RIGHTMOVE);
-                        break;
-                    case JUMP_PAD:
-                        result.tiles[i][j + 1].setMoveAction(MoveAction.state.JUMP);
-                        break;
-                    default:
-                        throw new java.io.IOException("Unexpected discriminant value");
-                }
-            }
-        }
-    }
 
     public void writeTo(java.io.OutputStream stream) throws java.io.IOException {
         StreamUtil.writeInt(stream, tiles.length);

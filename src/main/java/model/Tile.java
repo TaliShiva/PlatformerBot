@@ -1,6 +1,7 @@
 package model;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 import java.util.TreeSet;
 
@@ -11,24 +12,12 @@ public enum Tile {
     LADDER(3),
     JUMP_PAD(4);
     public int discriminant;
-
     Tile(int discriminant) {
         this.discriminant = discriminant;
     }
 
-    public void setMoveAction(MoveAction.state moveAction) {
-        Tile.moveAction.setTileState(moveAction);
-    }
-
-    public MoveAction getMoveAction() {
-        return moveAction;
-    }
-
-    private static MoveAction moveAction = new MoveAction();
-
-    public void setNeighbours(ArrayList<Tile> neighbours) {
-        this.neighbours = neighbours;
-    }
+    private List<Tile> parents = new ArrayList<>();
+    private ArrayList<Tile> neighbours = new ArrayList<>();//значит что из данной вершины ты можешь попасть только в эти
 
     public void setNeighbour(Tile neighbour) {
         if (neighbour != null)
@@ -38,6 +27,8 @@ public enum Tile {
     public ArrayList<Tile> getNeighbours() {
         return neighbours;
     }
-    private ArrayList<Tile> neighbours = new ArrayList<>();
 
+    public void setParent(Tile parent) {
+        parents.add(parent);
+    }
 }
