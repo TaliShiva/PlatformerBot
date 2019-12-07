@@ -3,6 +3,15 @@ import model.*;
 public class Section {
     private static Tile[][] lvlTiles; // Один раз на жизнь объекта храним все тайлы
     private int emptyTilesQuantity;
+
+    public int getEmptyTilesQuantity() {
+        return emptyTilesQuantity;
+    }
+
+    public boolean isHaveColllision() {
+        return haveColllision;
+    }
+
     private boolean haveColllision;
 
     public Section(Game game) {
@@ -14,29 +23,29 @@ public class Section {
         this.haveColllision = haveColllision;
     }
 
-     /**
+    /**
      * Метод проверяет коллизии между точками если они на одной горизонтали
+     *
      * @return возвращает отрезок, говорит есть ли коллизии и сколько от pos1 до pos2 было пустых тайлов
      */
     Section checkCollisionBetweenTwoHorizontalPositions(Vec2Float pos1, Vec2Float pos2) {
-        if (Math.abs(pos1.getY() - pos2.getY()) >= 1) {
+        int lengthX = (int) Math.abs(pos1.getX() - pos2.getX());
+        int lengthY = (int) Math.abs(pos1.getY() - pos2.getY());
+
+        if (lengthY > 1) {
             throw new IllegalStateException("не могла быть такая хуета");
         }
-        int counter = 0;
         if (pos1.getX() < pos2.getX()) {
-            for (int i = (int) pos1.getX(); i <= (int) pos2.getX(); i++) {
+            for (int i = 0; i < lengthX; i++) {
                 if (lvlTiles[(int) pos1.getX() + i][(int) pos1.getY()] == Tile.WALL) { //если точка слева от pos1 (трейсинг влево)
-                    return new Section(counter, true);
+                    return new Section(i, true);
                 }
-                counter++;
             }
-
         } else { // Не может быть ситуации равенства, это бы значило, что игроки друг в друге стоят
-            for (int i = (int) pos1.getX(); i >= (int) pos2.getX(); i--) {
+            for (int i = lengthX; i > 0; i--) {
                 if (lvlTiles[(int) pos1.getX() - i][(int) pos1.getY()] == Tile.WALL) { //если точка справа от pos1 (трейсинг вправо)
-                    return new Section(counter, true);
+                    return new Section(i, true);
                 }
-                counter++;
             }
         }
         return new Section((int) pos1.getX() - (int) pos2.getX(), false);
@@ -44,23 +53,32 @@ public class Section {
 
     /**
      * Метод проверяет коллизии между точками если они на одной вертикали
+     *
+     * @param pos1
+     * @param pos2
      * @return возвращает отрезок, говорит есть ли коллизии и сколько от pos1 до pos2 было пустых тайлов
      */
     Section checkСollisionBetweenTwoVerticalPositions(Vec2Float pos1, Vec2Float pos2) {
-        if (Math.abs(pos1.getX() - pos2.getX()) >= 1) {
+        float lengthX = Math.abs(pos1.getX() - pos2.getX());
+        int lengthY = (int) Math.abs(pos1.getY() - pos2.getY());
+
+        if (lengthX - 1 > 1e-6) {
             throw new IllegalStateException("не могла быть такая хуета");
         }
+        if (pos1.equals(pos2)) {
+            return new Section(0, false);
+        }
         if (pos1.getY() < pos2.getY()) {
-            for (int j = (int) pos1.getY(); j <= (int) pos2.getY(); j++) {
+            for (int j = 0; j < lengthY; j++) {
                 if (lvlTiles[(int) pos1.getX()][(int) pos2.getY() + j] == Tile.WALL) {
-                    return new Section(j - 1, true);
+                    return new Section(j, true);
                 }
             }
 
         } else {
-            for (int j = (int) pos1.getY(); j >= (int) pos1.getY(); j--) {
-                if (lvlTiles[(int) pos2.getX()][(int) pos1.getY() + j] == Tile.WALL) {
-                    return new Section(j - 1, true);
+            for (int j = lengthY; j > 0; j--) {
+                if (lvlTiles[(int) pos1.getX()][(int) pos1.getY() - j] == Tile.WALL) {
+                    return new Section(j, true);
                 }
             }
         }

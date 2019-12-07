@@ -11,10 +11,22 @@ public class MyStrategy {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
 
-    private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game) {
+    private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
         final Tile[][] lvlTiles = game.getLevel().getTiles();
-        Boolean x = shootIfOneLevel(unit, nearestEnemy, lvlTiles);
-        if (x != null) return x;
+
+        //TODO: исправить выстреливание всё таки
+//        if (unit.getPosition().getY() - nearestEnemy.getPosition().getY() <= 1) {
+//            if (shootHorPatch(unit, nearestEnemy, game)) {
+//                return false;
+//            }
+//        }
+//
+//        if (unit.getPosition().getX() - nearestEnemy.getPosition().getX() <= 1) {
+//            if (shootVerPatch(unit, nearestEnemy, game)) {
+//                return false;
+//            }
+//        }
+
 
         final double distanceBetweenPlayers = distanceSqr(unit.getPosition(), nearestEnemy.getPosition());
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceBetweenPlayers > 25) {
@@ -44,11 +56,19 @@ public class MyStrategy {
         return false;
     }
 
-    private static Boolean shootIfOneLevel(Unit unit, Unit nearestEnemy, Tile[][] lvlTiles) {
-        // TODO: проверка коллизий для корректной стрельбы
-        return null;
+    private static boolean shootHorPatch(Unit unit, Unit nearestEnemy, Game game) {
+        Section sec = new Section(game);
+        Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
+        Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
+        return sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision();
     }
 
+    private static boolean shootVerPatch(Unit unit, Unit nearestEnemy, Game game) {
+        Section sec = new Section(game);
+        Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
+        Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
+        return sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision();
+    }
 
     /**
      * @param unit - наш персонаж
@@ -94,7 +114,7 @@ public class MyStrategy {
 
         action.setAim(aim);
 
-        if (isStupidShot(unit, nearestEnemy, game)) {
+        if (isStupidShot(unit, nearestEnemy, game, debug)) {
             action.setShoot(false);
         } else {
             action.setShoot(true);
