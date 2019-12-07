@@ -88,7 +88,7 @@ class PathFinder {
                     }
                     if(Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= 1){
                         if(vertex.getPosition().getY() < nextVertex.getPosition().getY()){
-
+                            //TODO: реализовать проверку на пустые тайлы между позициями
                         }
                     }
                 }

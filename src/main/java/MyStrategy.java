@@ -45,39 +45,7 @@ public class MyStrategy {
     }
 
     private static Boolean shootIfOneLevel(Unit unit, Unit nearestEnemy, Tile[][] lvlTiles) {
-        if (Math.abs(unit.getPosition().getY() - nearestEnemy.getPosition().getY()) < 2) // если игроки примерно на одной выcоте
-        {
-            int i = 0;
-            if (nearestEnemy.getPosition().getX() < unit.getPosition().getX()) {//если враг слева (трейсинг влево)
-                while (true) {
-                    if (unit.getPosition().getX() - i > 0 && unit.getPosition().getX() - i < lvlTiles[0].length) { //проверка, что мы не вышли за границы ибо
-                        // хз в чём была проблема
-                        if (lvlTiles[(int) unit.getPosition().getX() - i][(int) unit.getPosition().getY()] != Tile.EMPTY) {
-                            break;
-                        }
-                        if (lvlTiles[(int) unit.getPosition().getX() - i][(int) unit.getPosition().getY()] ==
-                                lvlTiles[(int) nearestEnemy.getPosition().getX()][(int) unit.getPosition().getY()]) {
-                            return false;
-                        }
-                        i++;
-                    } else break;
-                }
-            } else if (nearestEnemy.getPosition().getX() > unit.getPosition().getX()) { //если враг справа (трейсинг вправо))
-                while (true) {
-                    if (unit.getPosition().getX() + i > 0 && unit.getPosition().getX() + i < lvlTiles[0].length) { //проверка, что мы не вышли за границы ибо
-                        // хз в чём была проблема
-                        if (lvlTiles[(int) unit.getPosition().getX() + i][(int) unit.getPosition().getY()] != Tile.EMPTY) {
-                            break;
-                        }
-                        if (lvlTiles[(int) unit.getPosition().getX() + i][(int) unit.getPosition().getY()] ==
-                                lvlTiles[(int) nearestEnemy.getPosition().getX()][(int) unit.getPosition().getY()]) {
-                            return false;
-                        }
-                        i++;
-                    } else break;
-                }
-            }
-        }
+
         return null;
     }
 
