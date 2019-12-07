@@ -1,9 +1,11 @@
 import model.*;
 
+import java.io.IOException;
+
 public class MyStrategy {
     public static final int MIN_ENEMY_HEALTH_FOR_SHOOTING_ROCKET = 80;
     public static final int MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET = 20;
-    private double EPS = 1;
+
 
     private static double distanceSqr(Vec2Double a, Vec2Double b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
@@ -85,7 +87,10 @@ public class MyStrategy {
      * @param game - контекст игры
      * @return - объект храняющий действие игрока
      */
-    public UnitAction getAction(Unit unit, Game game, Debug debug) {
+    public UnitAction getAction(Unit unit, Game game, Debug debug) throws IOException {
+
+        PathFinder pf = new PathFinder(game, debug);
+
         UnitAction action = new UnitAction();
         Unit nearestEnemy = getNearestEnemy(unit, game);
         LootBox nearestWeapon = getNearestWeapon(unit, game);
@@ -200,7 +205,7 @@ public class MyStrategy {
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.PISTOL) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestWeapon.getPosition() != null && nearestEnemy.getHealth() >= MIN_ENEMY_HEALTH_FOR_SHOOTING_ROCKET &&
-                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && (distanceSqr(unit.getPosition(), targetPos)) <= EPS) {
+                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && (distanceSqr(unit.getPosition(), targetPos)) <= 1) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestEnemy.getHealth() <= MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER) {
             if (nearestWeapon.getItem() instanceof Item.Weapon && ((Item.Weapon) nearestWeapon.getItem()).getWeaponType() == WeaponType.ASSAULT_RIFLE)
@@ -236,7 +241,7 @@ public class MyStrategy {
 
     private void savePlayer(Unit unit, Game game, UnitAction action, Unit nearestEnemy, Vec2Double nearestHealPos) {
 
-        if (nearestEnemy != null && ( unit.getHealth() <= 50 &&  nearestEnemy.getHealth() >= 30)) {
+        if (nearestEnemy != null && (unit.getHealth() <= 50 && nearestEnemy.getHealth() >= 30)) {
             if (nearestHealPos.getX() < unit.getPosition().getX()) {
                 action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
             } else {
