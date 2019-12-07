@@ -45,7 +45,7 @@ public class MyStrategy {
     }
 
     private static Boolean shootIfOneLevel(Unit unit, Unit nearestEnemy, Tile[][] lvlTiles) {
-
+        // TODO: проверка коллизий для корректной стрельбы
         return null;
     }
 

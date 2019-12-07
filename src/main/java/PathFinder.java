@@ -75,20 +75,21 @@ class PathFinder {
          */
         Graph(Game game, Debug debug) throws IOException {
             //double unitJumpLength = game.getProperties().getUnitJumpSpeed() * game.getProperties().getUnitJumpTime();
+            //TODO: Section section = new Section();
             CreateAllVertex();
             for (int i = 0; i < moveGraph.size(); i++) {
                 Vertex vertex = moveGraph.get(i);
                 for (int j = 0; j < moveGraph.size(); j++) {
                     Vertex nextVertex = moveGraph.get(j);
                     if (Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= 1 && Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= EPS) {
-                        vertex.setNeighbour(nextVertex, 1f);// добавление горизонтальных соседей
+                        vertex.setNeighbour(nextVertex, 1f);// добавление ближайших горизонтальных соседей
                     }
                     if (Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= 1 && Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= EPS) {
                         vertex.setNeighbour(nextVertex, 1f); // добавление вертикальных ближайших соседей
                     }
                     if(Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= 1){
                         if(vertex.getPosition().getY() < nextVertex.getPosition().getY()){
-                            //TODO: реализовать проверку на пустые тайлы между позициями
+                            //TODO: проверка коллизий
                         }
                     }
                 }

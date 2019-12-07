@@ -7,8 +7,6 @@ public class Section {
 
     public Section(Game game) {
         lvlTiles = game.getLevel().getTiles();
-        emptyTilesQuantity = 0;
-        haveColllision = false;
     }
 
     public Section(int emptyTilesQuantity, boolean haveColllision) {
