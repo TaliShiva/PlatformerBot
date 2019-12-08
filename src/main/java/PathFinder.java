@@ -1,4 +1,3 @@
-import com.sun.javafx.geom.Vec2f;
 import javafx.util.Pair;
 import model.*;
 
@@ -10,11 +9,12 @@ class PathFinder {
     private static double distanceSqr(Vec2Float a, Vec2Float b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
+
     private static final float EPS = 1e-6f;
     //private List<Vertex> visitedVertices = new ArrayList<>();
     //private List<Vertex> noVisitedVertices = new ArrayList<>();
-    Tile[][] tiles;
-    Graph graph;
+    private Tile[][] tiles;
+    private Graph graph;
 
     //конструктор в котором создаётся один раз сетка точек для поиска пути
     PathFinder(Game game, Debug debug) throws IOException {
@@ -23,20 +23,51 @@ class PathFinder {
     }
 
 
-    public void getPath(Vec2Float startPosition, Vec2Float finishPosition) {
+    public void getPath(Vec2Double startPosition, Vec2Double finishPosition, Debug debug) {
         //сперва притягиваем позицию к ближайшей вершине в графе
-        relaxateFinPos(finishPosition);
-        //TODO: сам алгоритм теперь написать нужно
-    }
+        Graph.Vertex startVer = relaxateFinPos(startPosition);
+        debug.draw(new CustomData.Line(new Vec2Float((float) startPosition.getX(), (float) startPosition.getY()), startVer.getPosition(), 0.2f, new ColorFloat(0, 0, 0, 100)));
 
-    private void relaxateFinPos(Vec2Float finishPosition) {
-        double distance = 1000;
-        for (Graph.Vertex v : graph.vertices) {
-            if(distanceSqr(finishPosition,v.position)<distance){
-                distance = distanceSqr(finishPosition,v.position);
-                finishPosition = v.position;
+        Graph.Vertex finVer = relaxateFinPos(finishPosition);
+        List<Graph.Vertex> path = new ArrayList<>();
+        List<Graph.Vertex> nonCheckedVertecies = new ArrayList<>();
+        startVer.setParent(null);
+        startVer.isVisited = true;
+        nonCheckedVertecies.add(startVer);
+        for (int i = 0; i < nonCheckedVertecies.size(); i++) {
+            Graph.Vertex currentVertex = nonCheckedVertecies.get(i);
+            for (Pair<Graph.Vertex, Float> v : currentVertex.getNeighbours()) {
+                if (v.getKey().isVisited) {
+                    continue; // если бывали в вершине то к следующей
+                }
+                v.getKey().isVisited = true; //если не бывали ещё в ней, то отмечаем тут, что побывали
+                v.getKey().setParent(currentVertex);
+                if (v.getKey() == finVer) { // если нашли финальную вершину, то
+                    Graph.Vertex tmpVer = v.getKey();
+                    path.add(tmpVer);
+                    while (tmpVer.getParent() != null) {
+                        path.add(tmpVer.getParent());
+                        debug.draw(new CustomData.Line(tmpVer.position, tmpVer.getParent().position, 0.2f, new ColorFloat(75, 75, 75, 100)));
+                        tmpVer = tmpVer.getParent();
+                    }
+                    break; // путь получен
+                }
+                nonCheckedVertecies.add(v.getKey()); // обновляем список
             }
         }
+    }
+
+    private Graph.Vertex relaxateFinPos(Vec2Double finishPosition) {
+        Vec2Float floatFinishPosition = new Vec2Float((float) finishPosition.getX(), (float) finishPosition.getY());
+        Graph.Vertex ver = null;
+        double distance = 1000;
+        for (Graph.Vertex v : graph.vertices) {
+            if (distanceSqr(floatFinishPosition, v.position) < distance) {
+                distance = distanceSqr(floatFinishPosition, v.position);
+                ver = v;
+            }
+        }
+        return ver;
     }
 
     class Graph {
@@ -78,6 +109,8 @@ class PathFinder {
             public Vertex getParent() {
                 return parent;
             }
+
+            public boolean isVisited = false;
         }
 
         /**
@@ -105,6 +138,9 @@ class PathFinder {
                 Vertex vertex = vertices.get(i);
                 for (int j = 0; j < vertices.size(); j++) {
                     Vertex nextVertex = vertices.get(j);
+                    if (nextVertex == vertex) {
+                        continue; // дабы избежать петель
+                    }
                     if (Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= 1 && Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= EPS) {
                         vertex.setNeighbour(nextVertex, 1f);// добавление ближайших горизонтальных соседей
                     }

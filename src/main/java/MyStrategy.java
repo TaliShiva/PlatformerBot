@@ -92,6 +92,7 @@ public class MyStrategy {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
         targetPos = goToRocketIfNeed(unit, game, targetPos);
+        pf.getPath(unit.getPosition(),targetPos, debug);
         drawLineToTarget(unit, debug, targetPos);
 
         //Блок ответственный за прыжки
