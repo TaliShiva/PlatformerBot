@@ -1,11 +1,13 @@
+import javafx.util.Pair;
 import model.*;
 
 import java.io.IOException;
+import java.util.List;
 
 public class MyStrategy {
     public static final int MIN_ENEMY_HEALTH_FOR_SHOOTING_ROCKET = 80;
     public static final int MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET = 20;
-
+    List<Pair<PathFinder.Graph.Vertex, Double>> path;
 
     private static double distanceSqr(Vec2Double a, Vec2Double b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
@@ -92,41 +94,74 @@ public class MyStrategy {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
         targetPos = goToRocketIfNeed(unit, game, targetPos);
-        pf.getPath(unit.getPosition(),targetPos, debug);
+        drawLineToTarget(unit, debug, targetPos);
+        path = pf.getPath(unit.getPosition(), targetPos, debug);
+
+
+        if (path.size() != 0) { // если существует путь какой-то, потому что если path - пустой, то его тупо нет
+            PathFinder.Graph.Vertex vertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
+            // нужно придумать как бы moveTask, класс храняющи последовательность действий
+            // ниже идёт его прототип для работы с ближайшей по логике движения вершиной
+
+            targetPos = new Vec2Double(vertex.getPosition().getX(), vertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
+//            System.out.printf("our pos:%f %f\n", unit.getPosition().getX(), unit.getPosition().getY());
+//            System.out.printf("target pos:%f %f\n", targetPos.getX(), targetPos.getY());
+            // движение влево
+            if (targetPos.getX() < unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
+                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+            //движение вправо
+            if (targetPos.getX() > unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
+                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+            //если цель выше, то прыгай
+            if (targetPos.getY() > unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
+                action.setJump(true);
+            }
+            //если цель ниже, то прыгай вниз
+            if (targetPos.getY() < unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
+                action.setJumpDown(true);
+            }
+
+            //если на одном уровне - не прыгай
+            if (Math.abs(targetPos.getY() - unit.getPosition().getY()) <= 0.1 && unit.getJumpState().isCanCancel() && (Math.abs(targetPos.getX() - unit.getPosition().getX()) <= 0.1)) {
+                action.setJump(false); //вообще остановись
+                action.setJumpDown(true);
+            }
+        } else {
+            System.out.println("поиск пути отказал");
+            // подстраховка на случай отказывания основного алгоритма
+            if (targetPos.getX() < unit.getPosition().getX()) {
+                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+            if (targetPos.getX() > unit.getPosition().getX()) {
+                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+            //Блок ответственный за движения
+            boolean jump = getJump(unit, game, nearestEnemy, targetPos);
+            jump = jumpDownIfNeedIt(unit, game, targetPos, action);
+            action.setJump(jump);
+            action.setJumpDown(!jump);
+        }
+
+        //backFromEnemy(nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
+        //savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
+
         drawLineToTarget(unit, debug, targetPos);
 
-        //Блок ответственный за прыжки
-        boolean jump = getJump(unit, game, nearestEnemy, targetPos);
-        jump = jumpDownIfNeedIt(unit, game, targetPos, action);
-        action.setJump(jump);
-        action.setJumpDown(!jump);
-
-        if (targetPos.getX() < unit.getPosition().getX()) {
-            action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
-        }
-        if (targetPos.getX() > unit.getPosition().getX()) {
-            action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
-        }
-        backFromEnemy(nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
-        savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
-
+        /** НЕ ОТНОСИТСЯ К ДВИЖЕНИю*/
         Vec2Double aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
                 nearestEnemy.getPosition().getY() - unit.getPosition().getY());
-
         action.setAim(aim);
-
         if (isStupidShot(unit, nearestEnemy, game, debug)) {
             action.setShoot(false);
         } else {
             action.setShoot(true);
         }
-
         //блок смены оружия, самый понятный патч, здесь мы можем описать все ситуации в которых имеется бот
         weaponSwapping(unit, nearestEnemy, nearestWeapon, targetPos, action);
-
         //блок ответственный за минирование
         action.setPlantMine(false);
-
         return action;
     }
 

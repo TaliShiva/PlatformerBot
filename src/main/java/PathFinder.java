@@ -2,6 +2,7 @@ import javafx.util.Pair;
 import model.*;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -23,38 +24,41 @@ class PathFinder {
     }
 
 
-    public void getPath(Vec2Double startPosition, Vec2Double finishPosition, Debug debug) {
+    public List<Pair<Graph.Vertex, Double>> getPath(Vec2Double startPosition, Vec2Double finishPosition, Debug debug) {
         //сперва притягиваем позицию к ближайшей вершине в графе
         Graph.Vertex startVer = relaxateFinPos(startPosition);
         debug.draw(new CustomData.Line(new Vec2Float((float) startPosition.getX(), (float) startPosition.getY()), startVer.getPosition(), 0.2f, new ColorFloat(0, 0, 0, 100)));
 
         Graph.Vertex finVer = relaxateFinPos(finishPosition);
-        List<Graph.Vertex> path = new ArrayList<>();
+        List<Pair<Graph.Vertex, Double>> path = new ArrayList<>();
         List<Graph.Vertex> nonCheckedVertecies = new ArrayList<>();
-        startVer.setParent(null);
+        startVer.setParent(null, 0);
         startVer.isVisited = true;
         nonCheckedVertecies.add(startVer);
         for (int i = 0; i < nonCheckedVertecies.size(); i++) {
             Graph.Vertex currentVertex = nonCheckedVertecies.get(i);
-            for (Pair<Graph.Vertex, Float> v : currentVertex.getNeighbours()) {
+            for (Pair<Graph.Vertex, Double> v : currentVertex.getNeighbours()) {
                 if (v.getKey().isVisited) {
                     continue; // если бывали в вершине то к следующей
                 }
                 v.getKey().isVisited = true; //если не бывали ещё в ней, то отмечаем тут, что побывали
-                v.getKey().setParent(currentVertex);
+                v.getKey().setParent(currentVertex, v.getValue()); // поместили длину ещё до предка
                 if (v.getKey() == finVer) { // если нашли финальную вершину, то
                     Graph.Vertex tmpVer = v.getKey();
-                    path.add(tmpVer);
-                    while (tmpVer.getParent() != null) {
+                    Double lengthToParent = v.getValue();
+                    path.add(new Pair<>(tmpVer, lengthToParent));
+                    while (tmpVer.getParent().getKey() != null) {
                         path.add(tmpVer.getParent());
-                        debug.draw(new CustomData.Line(tmpVer.position, tmpVer.getParent().position, 0.2f, new ColorFloat(75, 75, 75, 100)));
-                        tmpVer = tmpVer.getParent();
+                        debug.draw(new CustomData.Line(tmpVer.getPosition(), tmpVer.getParent().getKey().getPosition(), 0.2f, new ColorFloat(75, 75, 75, 100)));
+                        tmpVer = tmpVer.getParent().getKey();
+                        lengthToParent = tmpVer.getParent().getValue();
                     }
                     break; // путь получен
                 }
                 nonCheckedVertecies.add(v.getKey()); // обновляем список
             }
         }
+        return path;
     }
 
     private Graph.Vertex relaxateFinPos(Vec2Double finishPosition) {
@@ -70,7 +74,7 @@ class PathFinder {
         return ver;
     }
 
-    class Graph {
+    public class Graph {
         List<Vertex> vertices = new ArrayList<>();
 
         // точка нужна, чтобы по ней получить в итоге путь до стартовой точки
@@ -79,6 +83,9 @@ class PathFinder {
 
             private Tile startTile;
             private Vec2Float position;
+            private boolean isVisited = false;
+            private Pair<Vertex, Double> parent; //ссылка на предыдущую ноду и расстояние до неё
+            private ArrayList<Pair<Vertex, Double>> neighbours = new ArrayList<>(); // соседние вершины хранятся в виде пары, конкретной вершины и стоимости туда передвижения
 
             Vertex(Tile startTile, Vec2Float position) {
                 this.startTile = startTile;
@@ -88,51 +95,45 @@ class PathFinder {
             public Vec2Float getPosition() {
                 return position;
             }
-
-            private Vertex parent;
-
-            private ArrayList<Pair<Vertex, Float>> neighbours = new ArrayList<>(); // соседние вершины хранятся в виде пары, конкретной вершины и стоимости туда передвижения
-
-            public void setNeighbour(Vertex neighbour, Float weight) {
+            public void setNeighbour(Vertex neighbour, Double weight) {
                 if (neighbour != null)
                     this.neighbours.add(new Pair<>(neighbour, weight));
             }
 
-            public ArrayList<Pair<Vertex, Float>> getNeighbours() {
+            public ArrayList<Pair<Vertex, Double>> getNeighbours() {
                 return neighbours;
             }
 
-            public void setParent(Vertex parent) {
-                this.parent = parent;
+            public void setParent(Vertex parent, double length) {
+                this.parent = new Pair<>(parent, length);
             }
 
-            public Vertex getParent() {
+            public Pair<Vertex, Double> getParent() {
                 return parent;
             }
-
-            public boolean isVisited = false;
         }
 
         /**
          * Создание графа доступных для движений точек, с учётом коллизий от стен
          */
         Graph(Game game, Debug debug) throws IOException {
-            //double unitJumpLength = game.getProperties().getUnitJumpSpeed() * game.getProperties().getUnitJumpTime();
+            double unitJumpLength = game.getProperties().getUnitJumpSpeed() * game.getProperties().getUnitJumpTime(); // длина прыжка
             CreateAllVertex();
-            CreateAllEdges(game);
+            CreateAllEdges(game, unitJumpLength);
             debugDrawing(debug);
         }
 
         private void debugDrawing(Debug debug) {
             for (Vertex v : vertices) {
                 debug.draw(new CustomData.Rect(v.getPosition(), new Vec2Float(0.5f, 0.5f), new ColorFloat(100, 100, 0, 100)));
-                for (Pair<Vertex, Float> nv : v.getNeighbours()) {
+                for (Pair<Vertex, Double> nv : v.getNeighbours()) {
                     debug.draw(new CustomData.Line(v.position, nv.getKey().position, 0.07f, new ColorFloat(100, 0, 100, 100)));
                 }
             }
         }
 
-        private void CreateAllEdges(Game game) {
+        private void CreateAllEdges(Game game, double unitJumpLength) {
+            double jumpPudLength = game.getProperties().getJumpPadJumpTime() * game.getProperties().getJumpPadJumpSpeed();
             Section section = new Section(game);
             for (int i = 0; i < vertices.size(); i++) {
                 Vertex vertex = vertices.get(i);
@@ -142,14 +143,25 @@ class PathFinder {
                         continue; // дабы избежать петель
                     }
                     if (Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= 1 && Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= EPS) {
-                        vertex.setNeighbour(nextVertex, 1f);// добавление ближайших горизонтальных соседей
+                        vertex.setNeighbour(nextVertex, 1d);// добавление ближайших горизонтальных соседей
                     }
                     if (Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= 1 && Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) <= EPS) {
-                        vertex.setNeighbour(nextVertex, 1f); // добавление вертикальных ближайших соседей
+                        vertex.setNeighbour(nextVertex, 1d); // добавление вертикальных ближайших соседей
                     }
                     if (Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) < 1) {
-                        if (!section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision()) { // если нет коллизий
-                            vertex.setNeighbour(nextVertex, Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()));
+                        if (!section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() &&
+                                Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= unitJumpLength) { // если нет коллизий и длина ребра не больше чем прыжок, то добавляем
+                            vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
+                        }
+                        if (tiles[(int) vertex.getPosition().getX()][(int) vertex.getPosition().getY()] == Tile.JUMP_PAD &&
+                                !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() && // добавление особых рёбер от джампада наверх
+                                Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= jumpPudLength) {
+                            vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
+                        }
+                        if (tiles[(int) nextVertex.getPosition().getX()][(int) nextVertex.getPosition().getY()] == Tile.JUMP_PAD &&
+                                !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() // добавление особых рёбер до джампада
+                                ) {
+                            vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                         }
                     }
                 }
@@ -180,8 +192,8 @@ class PathFinder {
                         }
                     } else if (tiles[i][j] == Tile.JUMP_PAD) {                                                              // вершина джампада
                         vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
-                    } else if (tiles[i][j] == Tile.WALL && tiles[i][j + 1] == Tile.EMPTY) {                                 // вершина над стенкой
-                        vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + 1)));
+                    } else if (tiles[i][j] == Tile.EMPTY && tiles[i][j - 1] == Tile.WALL) {                                 // вершина над стенкой
+                        vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
                     }
                 }
             }
