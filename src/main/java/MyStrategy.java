@@ -7,7 +7,7 @@ import java.util.List;
 public class MyStrategy {
     public static final int MIN_ENEMY_HEALTH_FOR_SHOOTING_ROCKET = 80;
     public static final int MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET = 20;
-    List<Pair<PathFinder.Graph.Vertex, Double>> path;
+    private List<Pair<PathFinder.Graph.Vertex, Double>> path;
 
     private static double distanceSqr(Vec2Double a, Vec2Double b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
@@ -15,27 +15,23 @@ public class MyStrategy {
 
     private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
         final Tile[][] lvlTiles = game.getLevel().getTiles();
-        Bullet rocketBullet = new Bullet();
-        final double radius = 0;
-        if (unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER) {
-//            radius = rocketBullet.getExplosionParams().getRadius();
-            //TODO
-        }
+
+
         Section sec = new Section(game);
         Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
         if (!sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > radius))// если нет и коллизий
+                (sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() >= 4))// если нет и коллизий, три тайла радиус сплэша
         {
             return false;
         }
         if (!sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > radius))// если нет и коллизий
+                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > 4))// если нет и коллизий
         {
             return false;
         }
         if (!sec.checkСollisionBetweenTwoDiagonalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > radius))// если нет и коллизий
+                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > 4))// если нет и коллизий
         {
             return false;
         }
@@ -127,15 +123,15 @@ public class MyStrategy {
                 action.setJump(true);
             }
             //если цель ниже, то прыгай вниз
-            if (targetPos.getY() < unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
+            if (targetPos.getY() < unit.getPosition().getY()  && unit.getJumpState().isCanJump()) {
                 action.setJumpDown(true);
             }
 
             //если на одном уровне - не прыгай
-            if (Math.abs(targetPos.getY() - unit.getPosition().getY()) <= 0.1 && unit.getJumpState().isCanCancel() && (Math.abs(targetPos.getX() - unit.getPosition().getX()) <= 0.1)) {
+            /*if (Math.abs(targetPos.getY() - unit.getPosition().getY()) <= 0.1 && unit.getJumpState().isCanCancel() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
                 action.setJump(false); //вообще остановись
-                action.setJumpDown(true);
-            }
+                action.setJumpDown(false);
+            }*/
         } else {
             System.out.println("поиск пути отказал");
             // подстраховка на случай отказывания основного алгоритма

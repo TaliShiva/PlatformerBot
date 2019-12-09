@@ -2,7 +2,6 @@ import javafx.util.Pair;
 import model.*;
 
 import java.io.IOException;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -95,6 +94,7 @@ class PathFinder {
             public Vec2Float getPosition() {
                 return position;
             }
+
             public void setNeighbour(Vertex neighbour, Double weight) {
                 if (neighbour != null)
                     this.neighbours.add(new Pair<>(neighbour, weight));
@@ -160,16 +160,17 @@ class PathFinder {
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                             vertex.setNeighbour(vertex, Math.abs((double) nextVertex.getPosition().getY() - vertex.getPosition().getY()));
                         }
-                        /*if (tiles[(int) nextVertex.getPosition().getX()][(int) nextVertex.getPosition().getY()] == Tile.JUMP_PAD &&
+                        if (tiles[(int) nextVertex.getPosition().getX()][(int) nextVertex.getPosition().getY()] == Tile.JUMP_PAD &&
                                 !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() // добавление особых рёбер до джампада - сверху
                                 ) {
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
-                        }*/
+                        }
                     }
-                    if(Math.abs((int)vertex.getPosition().getX() - (int)nextVertex.getPosition().getX()) == Math.abs((int)vertex.getPosition().getY() - (int)nextVertex.getPosition().getY()) &&
-                        !section.checkСollisionBetweenTwoDiagonalPositions(vertex.getPosition(),nextVertex.getPosition()).isHaveColllision()){
-                        vertex.setNeighbour(nextVertex, floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) );
+                    if (Math.abs((int) vertex.getPosition().getX() - (int) nextVertex.getPosition().getX()) == Math.abs((int) vertex.getPosition().getY() - (int) nextVertex.getPosition().getY()) &&
+                            !section.checkСollisionBetweenTwoDiagonalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() &&
+                            floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) <= unitJumpLength * 5) {
+                        vertex.setNeighbour(nextVertex, floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()));
                     }
                 }
             }
@@ -206,6 +207,7 @@ class PathFinder {
             }
         }
     }
+
     private static double floatDistanceSqr(Vec2Float a, Vec2Float b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }

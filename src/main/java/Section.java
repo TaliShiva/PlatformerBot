@@ -35,7 +35,8 @@ public class Section {
         int lengthY = (int) Math.abs(pos1.getY() - pos2.getY());
 
         if (lengthY > 1) {
-            throw new IllegalStateException("не могла быть такая хуета");
+//            throw new IllegalStateException("не могла быть такая хуета");
+            return new Section(0, true);
         }
         if (pos1.getX() < pos2.getX()) {
             for (int i = 0; i < lengthX; i++) {
@@ -65,7 +66,8 @@ public class Section {
         int lengthY = (int) Math.abs(pos1.getY() - pos2.getY());
 
         if (lengthX - 1 > 1e-6) {
-            throw new IllegalStateException("не могла быть такая хуета");
+//            throw new IllegalStateException("не могла быть такая хуета");
+            return new Section(0, true);
         }
         if (pos1.equals(pos2)) {
             return new Section(0, false);
@@ -92,6 +94,7 @@ public class Section {
      */
     Section checkСollisionBetweenTwoDiagonalPositions(Vec2Float pos1, Vec2Float pos2) {
         int length = Math.abs((int) pos1.getX() - (int) pos2.getX());
+
         if (pos1.equals(pos2)) {
             return new Section(0, false);
         }
@@ -109,7 +112,7 @@ public class Section {
                     }
                 }
             }
-        } else if(pos1.getY() > pos2.getY()){
+        } else if (pos1.getY() > pos2.getY()) {
             if (pos1.getX() < pos2.getX()) { // диагональ слева-сверху -> направо-вниз
                 for (int k = 0; k < length; k++) {
                     if (lvlTiles[(int) pos1.getX() + k][(int) pos1.getY() - k] == Tile.WALL) {
