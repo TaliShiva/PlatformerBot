@@ -178,7 +178,7 @@ class PathFinder {
                     }
                     if (Math.abs((int) vertex.getPosition().getX() - (int) nextVertex.getPosition().getX()) == Math.abs((int) vertex.getPosition().getY() - (int) nextVertex.getPosition().getY()) &&
                             !section.checkСollisionBetweenTwoDiagonalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() &&
-                            floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) <= unitJumpLength * 5) {
+                            floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) <= unitJumpLength * 5.5) {
                         vertex.setNeighbour(nextVertex, floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()));
                     }
                 }

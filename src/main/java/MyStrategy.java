@@ -9,7 +9,9 @@ public class MyStrategy {
     public static final int MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET = 20;
     static int endTaskTick = 0;
     private UnitAction lastUnitAction = new UnitAction();
+
     private List<Pair<PathFinder.Graph.Vertex, Double>> path;
+
 
     private static double distanceSqr(Vec2Double a, Vec2Double b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
@@ -78,18 +80,11 @@ public class MyStrategy {
      * @return - объект храняющий действие игрока
      */
     public UnitAction getAction(Unit unit, Game game, Debug debug) throws IOException {
-
-//        System.out.println(game.getProperties().getUnitMaxHorizontalSpeed());
-//        System.out.println(game.getProperties().getMaxTickCount());
-//        System.out.println(game.getProperties().getTicksPerSecond());
-//        System.out.println(game.getProperties().getUnitJumpSpeed());
-//        System.out.println(game.getProperties().getUnitJumpTime());
         PathFinder pf = new PathFinder(game, debug);
-
         UnitAction action = new UnitAction();
         Unit nearestEnemy = getNearestEnemy(unit, game);
         LootBox nearestWeapon = getNearestWeapon(unit, game);
-        Vec2Double nearestHealPos = getNearestHealPos(unit, game, pf,debug );
+        Vec2Double nearestHealPos = getNearestHealPos(unit, game, pf, debug);
 
         //Подготовительная фаза - её смысл в том, чтобы подготовить юнита к бою, как понять что подготовительная фаза закончилась? (может быть когда хп игроков != 100, или когда они приблизились)
         Vec2Double targetPos = unit.getPosition(); // использовать только для aim-а
@@ -99,22 +94,59 @@ public class MyStrategy {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
         targetPos = goToRocketIfNeed(unit, game, targetPos);
+        //backFromEnemy(nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
+        //savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
         drawLineToTarget(unit, debug, targetPos);
 
+        action = movingModule(unit, game, debug, pf, action, nearestEnemy, targetPos);
+
+
+        /** НЕ ОТНОСИТСЯ К ДВИЖЕНИю*/
+        Vec2Double aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
+                nearestEnemy.getPosition().getY() - unit.getPosition().getY());
+        action.setAim(aim);
+
+        if (isStupidShot(unit, nearestEnemy, game, debug)) {
+            action.setShoot(false);
+        } else {
+            action.setShoot(true);
+        }
+        //блок смены оружия, самый понятный патч, здесь мы можем описать все ситуации в которых имеется бот
+        weaponSwapping(unit, nearestEnemy, nearestWeapon, action);
+        //блок ответственный за минирование
+        action.setPlantMine(false);
+        return action;
+    }
+
+    private UnitAction movingModule(Unit unit, Game game, Debug debug, PathFinder pf, UnitAction action, Unit nearestEnemy, Vec2Double targetPos) {
         path = pf.getPath(unit.getPosition(), targetPos, debug);
 
         if (game.getCurrentTick() < endTaskTick) {
             action = lastUnitAction; // патчим текущий экшен, чтобы сохранить паттерн движения
+        } else if (game.getCurrentTick() == endTaskTick) {
+            action.setJump(false); // костыль ебаный. но избавляет от бесконечного дрочения в джамппаде и позволяет чётко поднимать по платформам
+            if (targetPos.getX() < unit.getPosition().getX()) {
+                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+            //движение вправо
+            if (targetPos.getX() > unit.getPosition().getX()) {
+                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
+            }
         } else {
             if (path.size() != 0) { // если существует путь какой-то, потому что если path - пустой, то его тупо нет
-                PathFinder.Graph.Vertex vertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
-                final int tickCountToCongratulateHorizontalMove = getTickCountToCongratulateTask(game, unit, vertex.getPosition()); // считаем количество тиков до конца таска
-                endTaskTick = game.getCurrentTick() + tickCountToCongratulateHorizontalMove; // храним тик, на котором доделается задание, чтобы после этого применять другие паттерны действий
-
+                PathFinder.Graph.Vertex vertex = path.get(path.size() - 1).getKey(); // сейчас путь в обратном порядке записан,
+                PathFinder.Graph.Vertex nextVertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
+                final int tickCountToCongratulateHorizontalMove = getTickCountToCongratulateTask(game, unit, nextVertex.getPosition()); // считаем количество тиков до конца таска
+                final int tickCountToCongratulateVerticalMove = getTickCountToFinishJump(game, unit, nextVertex.getPosition());
+                if (tickCountToCongratulateVerticalMove > 1) {
+                    endTaskTick = game.getCurrentTick() + tickCountToCongratulateVerticalMove;
+                } else {
+                    endTaskTick = game.getCurrentTick() + tickCountToCongratulateHorizontalMove; // храним тик, на котором доделается задание, чтобы после этого применять другие паттерны действий
+                }
                 // нужно придумать как бы moveTask, класс храняющи последовательность действий
                 // ниже идёт его прототип для работы с ближайшей по логике движения вершиной
 
-                targetPos = new Vec2Double(vertex.getPosition().getX(), vertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
+                targetPos = new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
                 // движение влево
                 if (targetPos.getX() < unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
                     action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
@@ -132,13 +164,7 @@ public class MyStrategy {
                     action.setJumpDown(true);
                 }
                 lastUnitAction = action;// сохраняем ссылку на последний экшен
-                //если на одном уровне - не прыгай
-            /*if (Math.abs(targetPos.getY() - unit.getPosition().getY()) <= 0.1 && unit.getJumpState().isCanCancel() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
-                action.setJump(false); //вообще остановись
-                action.setJumpDown(false);
-            }*/
 
-                //savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
             } else {
                 System.out.printf("поиск пути отказал %d\n", game.getCurrentTick());
                 // подстраховка на случай отказывания основного алгоритма
@@ -155,37 +181,29 @@ public class MyStrategy {
                 action.setJumpDown(!jump);
             }
         }
-        //backFromEnemy(nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
-
-
         drawLineToTarget(unit, debug, targetPos);
-        /** НЕ ОТНОСИТСЯ К ДВИЖЕНИю*/
-        Vec2Double aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
-                nearestEnemy.getPosition().getY() - unit.getPosition().getY());
-        action.setAim(aim);
-
-        if (isStupidShot(unit, nearestEnemy, game, debug)) {
-            action.setShoot(false);
-        } else {
-            action.setShoot(true);
-        }
-        //блок смены оружия, самый понятный патч, здесь мы можем описать все ситуации в которых имеется бот
-        weaponSwapping(unit, nearestEnemy, nearestWeapon, targetPos, action);
-        //блок ответственный за минирование
-        action.setPlantMine(false);
         return action;
     }
 
-    private int getTickCountToCongratulateTask(Game game, Unit unit, Vec2Float endPos) {
-        double speedOfOneMove = 1d / 60d;
-        double lengthOnOneTick = speedOfOneMove * game.getProperties().getUnitMaxHorizontalSpeed();
-        return (int) ((Math.abs(unit.getPosition().getX() - endPos.getX()) / lengthOnOneTick) + 1);
-    }
 
     private void drawLineToTarget(Unit unit, Debug debug, Vec2Double targetPos) {
         Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float debugTargetPoint = new Vec2Float((float) targetPos.getX(), (float) targetPos.getY());
         debug.draw(new CustomData.Line(debugUnitPoint, debugTargetPoint, 0.2f, new ColorFloat(100, 0, 0, 100)));
+    }
+
+    private int getTickCountToCongratulateTask(Game game, Unit unit, Vec2Float endPos) {
+        double speedOfOneMove = 1d / 60d;
+        double lengthOnOneTick = speedOfOneMove * game.getProperties().getUnitMaxHorizontalSpeed();
+
+        return (int) ((Math.abs(unit.getPosition().getX() - endPos.getX()) / lengthOnOneTick) + 1);
+    }
+
+    private int getTickCountToFinishJump(Game game, Unit unit, Vec2Float endPos) {
+        double lengthOnOneTick = 10d / 60d;
+        int tickToFinishJump = (int) ((Math.abs(unit.getPosition().getY() - endPos.getY()) / lengthOnOneTick) + 1);
+
+        return tickToFinishJump;
     }
 
     private Vec2Double getNearestHealPos(Unit unit, Game game, PathFinder pf, Debug debug) {
@@ -218,7 +236,6 @@ public class MyStrategy {
     }
 
 
-
     private Unit getNearestEnemy(Unit unit, Game game) {
         Unit nearestEnemy = null;
         for (Unit other : game.getUnits()) {
@@ -245,11 +262,11 @@ public class MyStrategy {
         return jump;
     }
 
-    private void weaponSwapping(Unit unit, Unit nearestEnemy, LootBox nearestWeapon, Vec2Double targetPos, UnitAction action) {
+    private void weaponSwapping(Unit unit, Unit nearestEnemy, LootBox nearestWeapon, UnitAction action) {
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.PISTOL) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestWeapon.getPosition() != null && nearestEnemy.getHealth() >= MIN_ENEMY_HEALTH_FOR_SHOOTING_ROCKET &&
-                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && (distanceSqr(unit.getPosition(), targetPos)) <= 1) {
+                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && (distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) <= 1) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestEnemy.getHealth() <= MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER) {
             if (nearestWeapon.getItem() instanceof Item.Weapon && ((Item.Weapon) nearestWeapon.getItem()).getWeaponType() == WeaponType.ASSAULT_RIFLE)
