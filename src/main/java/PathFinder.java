@@ -25,10 +25,10 @@ class PathFinder {
 
     public List<Pair<Graph.Vertex, Double>> getPath(Vec2Double startPosition, Vec2Double finishPosition, Debug debug) {
         //сперва притягиваем позицию к ближайшей вершине в графе
-        Graph.Vertex startVer = relaxateFinPos(startPosition);
+        Graph.Vertex startVer = relaxateFinPos(startPosition,finishPosition);
         debug.draw(new CustomData.Line(new Vec2Float((float) startPosition.getX(), (float) startPosition.getY()), startVer.getPosition(), 0.2f, new ColorFloat(0, 0, 0, 100)));
 
-        Graph.Vertex finVer = relaxateFinPos(finishPosition);
+        Graph.Vertex finVer = relaxateFinPos(finishPosition,finishPosition);
         List<Pair<Graph.Vertex, Double>> path = new ArrayList<>();
         List<Graph.Vertex> nonCheckedVertecies = new ArrayList<>();
         startVer.setParent(null, 0);
@@ -60,12 +60,21 @@ class PathFinder {
         return path;
     }
 
-    private Graph.Vertex relaxateFinPos(Vec2Double finishPosition) {
-        Vec2Float floatFinishPosition = new Vec2Float((float) finishPosition.getX(), (float) finishPosition.getY());
+    public double getPathLength(List<Pair<Graph.Vertex, Double>> path){
+        double pathLength = 0;
+        for (Pair<Graph.Vertex, Double> p : path) {
+            pathLength += p.getValue();
+        }
+        return pathLength;
+    }
+
+    private Graph.Vertex relaxateFinPos(Vec2Double startPosition, Vec2Double finishPosition) {
+        Vec2Float floatFinishPosition = new Vec2Float((float) startPosition.getX(), (float) startPosition.getY());
         Graph.Vertex ver = null;
         double distance = 1000;
         for (Graph.Vertex v : graph.vertices) {
             if (distanceSqr(floatFinishPosition, v.position) < distance) {
+//            if (Math.abs(floatFinishPosition.getX() + v.getPosition().getX()) < distance) {
                 distance = distanceSqr(floatFinishPosition, v.position);
                 ver = v;
             }
@@ -162,7 +171,7 @@ class PathFinder {
                         }
                         if (tiles[(int) nextVertex.getPosition().getX()][(int) nextVertex.getPosition().getY()] == Tile.JUMP_PAD &&
                                 !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() // добавление особых рёбер до джампада - сверху
-                                ) {
+                        ) {
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                         }
