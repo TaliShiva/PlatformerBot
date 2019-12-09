@@ -15,20 +15,30 @@ public class MyStrategy {
 
     private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
         final Tile[][] lvlTiles = game.getLevel().getTiles();
-
-        //TODO: исправить выстреливание всё таки
-//        if (unit.getPosition().getY() - nearestEnemy.getPosition().getY() <= 1) {
-//            if (shootHorPatch(unit, nearestEnemy, game)) {
-//                return false;
-//            }
-//        }
-//
-//        if (unit.getPosition().getX() - nearestEnemy.getPosition().getX() <= 1) {
-//            if (shootVerPatch(unit, nearestEnemy, game)) {
-//                return false;
-//            }
-//        }
-
+        Bullet rocketBullet = new Bullet();
+        final double radius = 0;
+        if (unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER) {
+//            radius = rocketBullet.getExplosionParams().getRadius();
+            //TODO
+        }
+        Section sec = new Section(game);
+        Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
+        Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
+        if (!sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
+                (sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > radius))// если нет и коллизий
+        {
+            return false;
+        }
+        if (!sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
+                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > radius))// если нет и коллизий
+        {
+            return false;
+        }
+        if (!sec.checkСollisionBetweenTwoDiagonalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
+                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > radius))// если нет и коллизий
+        {
+            return false;
+        }
 
         final double distanceBetweenPlayers = distanceSqr(unit.getPosition(), nearestEnemy.getPosition());
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceBetweenPlayers > 25) {
@@ -104,14 +114,12 @@ public class MyStrategy {
             // ниже идёт его прототип для работы с ближайшей по логике движения вершиной
 
             targetPos = new Vec2Double(vertex.getPosition().getX(), vertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
-//            System.out.printf("our pos:%f %f\n", unit.getPosition().getX(), unit.getPosition().getY());
-//            System.out.printf("target pos:%f %f\n", targetPos.getX(), targetPos.getY());
             // движение влево
-            if (targetPos.getX() < unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
+            if (targetPos.getX() < unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.15) {
                 action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
             }
             //движение вправо
-            if (targetPos.getX() > unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
+            if (targetPos.getX() > unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.15) {
                 action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
             }
             //если цель выше, то прыгай
@@ -153,6 +161,7 @@ public class MyStrategy {
         Vec2Double aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
                 nearestEnemy.getPosition().getY() - unit.getPosition().getY());
         action.setAim(aim);
+
         if (isStupidShot(unit, nearestEnemy, game, debug)) {
             action.setShoot(false);
         } else {
