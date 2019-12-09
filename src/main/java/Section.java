@@ -1,4 +1,6 @@
-import model.*;
+import model.Game;
+import model.Tile;
+import model.Vec2Float;
 
 public class Section {
     private static Tile[][] lvlTiles; // Один раз на жизнь объекта храним все тайлы
@@ -83,6 +85,46 @@ public class Section {
             }
         }
         return new Section((int) pos1.getY() - (int) pos2.getY(), false);
+    }
+
+    /**
+     * Проверка диагональных коллизий
+     */
+    Section checkСollisionBetweenTwoDiagonalPositions(Vec2Float pos1, Vec2Float pos2) {
+        int length = Math.abs((int) pos1.getX() - (int) pos2.getX());
+        if (pos1.equals(pos2)) {
+            return new Section(0, false);
+        }
+        if (pos1.getY() < pos2.getY()) {
+            if (pos1.getX() < pos2.getX()) { //диагональ слева-снизу -> направо наверх
+                for (int k = 0; k < length; k++) {
+                    if (lvlTiles[(int) pos1.getX() + k][(int) pos1.getY() + k] == Tile.WALL) {
+                        return new Section(k, true);
+                    }
+                }
+            } else { // диагональ справа-снизу -> налево наверх
+                for (int k = 0; k < length; k++) {
+                    if (lvlTiles[(int) pos1.getX() - k][(int) pos1.getY() + k] == Tile.WALL) {
+                        return new Section(k, true);
+                    }
+                }
+            }
+        } else if(pos1.getY() > pos2.getY()){
+            if (pos1.getX() < pos2.getX()) { // диагональ слева-сверху -> направо-вниз
+                for (int k = 0; k < length; k++) {
+                    if (lvlTiles[(int) pos1.getX() + k][(int) pos1.getY() - k] == Tile.WALL) {
+                        return new Section(k, true);
+                    }
+                }
+            } else { // диагональ справа-сверху -> налево-вниз
+                for (int k = 0; k < length; k++) {
+                    if (lvlTiles[(int) pos1.getX() - k][(int) pos1.getY() - k] == Tile.WALL) {
+                        return new Section(k, true);
+                    }
+                }
+            }
+        }
+        return new Section(length, false);
     }
 
 }

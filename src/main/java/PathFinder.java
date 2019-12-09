@@ -150,19 +150,26 @@ class PathFinder {
                     }
                     if (Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) < 1) {
                         if (!section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() &&
-                                Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= unitJumpLength) { // если нет коллизий и длина ребра не больше чем прыжок, то добавляем
+                                Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= unitJumpLength) {
+                            // если нет коллизий и длина ребра не больше чем прыжок, то добавляем вертикальное ребро
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                         }
                         if (tiles[(int) vertex.getPosition().getX()][(int) vertex.getPosition().getY()] == Tile.JUMP_PAD &&
                                 !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() && // добавление особых рёбер от джампада наверх
                                 Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= jumpPudLength) {
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
+                            vertex.setNeighbour(vertex, Math.abs((double) nextVertex.getPosition().getY() - vertex.getPosition().getY()));
                         }
-                        if (tiles[(int) nextVertex.getPosition().getX()][(int) nextVertex.getPosition().getY()] == Tile.JUMP_PAD &&
-                                !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() // добавление особых рёбер до джампада
+                        /*if (tiles[(int) nextVertex.getPosition().getX()][(int) nextVertex.getPosition().getY()] == Tile.JUMP_PAD &&
+                                !section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() // добавление особых рёбер до джампада - сверху
                                 ) {
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
-                        }
+                            vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
+                        }*/
+                    }
+                    if(Math.abs((int)vertex.getPosition().getX() - (int)nextVertex.getPosition().getX()) == Math.abs((int)vertex.getPosition().getY() - (int)nextVertex.getPosition().getY()) &&
+                        !section.checkСollisionBetweenTwoDiagonalPositions(vertex.getPosition(),nextVertex.getPosition()).isHaveColllision()){
+                        vertex.setNeighbour(nextVertex, floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) );
                     }
                 }
             }
@@ -199,7 +206,9 @@ class PathFinder {
             }
         }
     }
-
+    private static double floatDistanceSqr(Vec2Float a, Vec2Float b) {
+        return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
+    }
 }
 
 
