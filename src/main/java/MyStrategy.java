@@ -143,7 +143,7 @@ public class MyStrategy {
                 final int tickCountToCongratulateHorizontalMove = getTickCountToCongratulateTask(game, unit, nextVertex.getPosition()); // считаем количество тиков до конца таска
                 final int tickCountToCongratulateVerticalMove = getTickCountToFinishJump(game, unit, nextVertex.getPosition());
                 if (tickCountToCongratulateVerticalMove > 1) {
-                    endTaskTick = game.getCurrentTick() + tickCountToCongratulateVerticalMove;
+                    endTaskTick = game.getCurrentTick() + tickCountToCongratulateVerticalMove + 1;
                 } else {
                     endTaskTick = game.getCurrentTick() + tickCountToCongratulateHorizontalMove; // храним тик, на котором доделается задание, чтобы после этого применять другие паттерны действий
                 }
@@ -295,7 +295,7 @@ public class MyStrategy {
         Vec2Double enemyPosition = nearestEnemy.getPosition();
         Vec2Double unitPosition = unit.getPosition();
 
-        if (distanceSqr(unitPosition, enemyPosition) <= 30) {
+        if (distanceSqr(unitPosition, enemyPosition) <= 30 && nearestEnemy.getWeapon() != null) {
             endTaskTick = game.getCurrentTick();
             if (enemyPosition.getX() > unitPosition.getX()) {// враг правее
                 action.setVelocity(-1 * speed);

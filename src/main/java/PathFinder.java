@@ -12,15 +12,15 @@ class PathFinder {
     }
 
     private static final float EPS = 1e-6f;
-    //private List<Vertex> visitedVertices = new ArrayList<>();
-    //private List<Vertex> noVisitedVertices = new ArrayList<>();
     private Tile[][] tiles;
     private Graph graph;
-
+    double lengthOnOneTick;
     //конструктор в котором создаётся один раз сетка точек для поиска пути
     PathFinder(Game game, Debug debug) throws IOException {
         tiles = game.getLevel().getTiles();
         graph = new Graph(game, debug);
+        double speedOfOneMove = 1d / 60d;
+        lengthOnOneTick = speedOfOneMove * game.getProperties().getUnitMaxHorizontalSpeed();
     }
 
 
@@ -197,10 +197,6 @@ class PathFinder {
                     } else if (tiles[i][j] == Tile.WALL && tiles[i + 1][j] == Tile.WALL && tiles[i][j - 1] == Tile.WALL) { // левый верхний угол
                         vertices.add(new Vertex(tiles[i - 1][j + 1], new Vec2Float(i - 1, j + 1)));
                         vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + 1)));
-                    } else if (tiles[i][j] == Tile.WALL && tiles[i][j + 1] == Tile.WALL && tiles[i - 1][j] == Tile.WALL) { // внутренний правый угол
-                        vertices.add(new Vertex(tiles[i - 1][j + 1], new Vec2Float(i - 1, j + 1)));
-                    } else if (tiles[i][j] == Tile.WALL && tiles[i][j + 1] == Tile.WALL && tiles[i + 1][j] == Tile.WALL) { // внутренний левый угол
-                        vertices.add(new Vertex(tiles[i + 1][j + 1], new Vec2Float(i + 1, j + 1)));
                     } else if (tiles[i][j] == Tile.PLATFORM) {                                                              // вершина над платформой
                         vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + 1)));
                     } else if (tiles[i][j] == Tile.LADDER) {                                                                // вершина лестницы
