@@ -1,10 +1,10 @@
 import model.*;
+
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 class PathFinder {
-
 
 
     private static double distanceSqr(Vec2Float a, Vec2Float b) {
@@ -26,10 +26,10 @@ class PathFinder {
 
     public List<Pair<Graph.Vertex, Double>> getPath(Vec2Double startPosition, Vec2Double finishPosition, Debug debug) {
         //сперва притягиваем позицию к ближайшей вершине в графе
-        Graph.Vertex startVer = relaxateFinPos(startPosition,finishPosition);
+        Graph.Vertex startVer = relaxateFinPos(startPosition, finishPosition);
         debug.draw(new CustomData.Line(new Vec2Float((float) startPosition.getX(), (float) startPosition.getY()), startVer.getPosition(), 0.2f, new ColorFloat(0, 0, 0, 100)));
 
-        Graph.Vertex finVer = relaxateFinPos(finishPosition,finishPosition);
+        Graph.Vertex finVer = relaxateFinPos(finishPosition, finishPosition);
         List<Pair<Graph.Vertex, Double>> path = new ArrayList<>();
         List<Graph.Vertex> nonCheckedVertecies = new ArrayList<>();
         startVer.setParent(null, 0);
@@ -61,7 +61,7 @@ class PathFinder {
         return path;
     }
 
-    public double getPathLength(List<Pair<Graph.Vertex, Double>> path){
+    public double getPathLength(List<Pair<Graph.Vertex, Double>> path) {
         double pathLength = 0;
         for (Pair<Graph.Vertex, Double> p : path) {
             pathLength += p.getValue();
@@ -129,7 +129,7 @@ class PathFinder {
         Graph(Game game, Debug debug) throws IOException {
             double unitJumpLength = game.getProperties().getUnitJumpSpeed() * game.getProperties().getUnitJumpTime(); // длина прыжка
             CreateAllVertex();
-            CreateAllEdges(game, unitJumpLength);
+            CreateAllEdges(game);
             debugDrawing(debug);
         }
 
@@ -142,7 +142,7 @@ class PathFinder {
             }
         }
 
-        private void CreateAllEdges(Game game, double unitJumpLength) {
+        private void CreateAllEdges(Game game) {
             double jumpPudLength = game.getProperties().getJumpPadJumpTime() * game.getProperties().getJumpPadJumpSpeed();
             Section section = new Section(game);
             for (int i = 0; i < vertices.size(); i++) {
@@ -160,7 +160,7 @@ class PathFinder {
                     }
                     if (Math.abs(vertex.getPosition().getX() - nextVertex.getPosition().getX()) < 1) {
                         if (!section.checkСollisionBetweenTwoVerticalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() &&
-                                Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= unitJumpLength) {
+                                Math.abs(vertex.getPosition().getY() - nextVertex.getPosition().getY()) <= 5.5) {
                             // если нет коллизий и длина ребра не больше чем прыжок, то добавляем вертикальное ребро
                             vertex.setNeighbour(nextVertex, Math.abs((double) vertex.getPosition().getY() - nextVertex.getPosition().getY()));
                         }
@@ -179,7 +179,7 @@ class PathFinder {
                     }
                     if (Math.abs((int) vertex.getPosition().getX() - (int) nextVertex.getPosition().getX()) == Math.abs((int) vertex.getPosition().getY() - (int) nextVertex.getPosition().getY()) &&
                             !section.checkСollisionBetweenTwoDiagonalPositions(vertex.getPosition(), nextVertex.getPosition()).isHaveColllision() &&
-                            floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) <= unitJumpLength * 5.5) {
+                            floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()) <= 5.5) {
                         vertex.setNeighbour(nextVertex, floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition()));
                     }
                 }
@@ -189,9 +189,11 @@ class PathFinder {
 
         private void CreateAllVertex() {
             // если мы будет получать оставшуюся длиину прыжка, то можно сделать так, у вершины есть движение наверх, пока длина больше либо равна 1
-            for (int i = 1; i < tiles.length - 1; i++) {
-                for (int j = 1; j < tiles[i].length - 1; j++) {
-                    if (tiles[i][j] == Tile.WALL && tiles[i - 1][j] == Tile.WALL && tiles[i][j - 1] == Tile.WALL) { // правый верхний угол
+            int width = tiles.length;
+            for (int i = 1; i < width - 1; i++) {
+                int height = tiles[i].length;
+                for (int j = 1; j < height - 1; j++) {
+                    /*if (tiles[i][j] == Tile.WALL && tiles[i - 1][j] == Tile.WALL && tiles[i][j - 1] == Tile.WALL) { // правый верхний угол
                         vertices.add(new Vertex(tiles[i + 1][j + 1], new Vec2Float(i + 1, j + 1)));
                         vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + 1)));
                     } else if (tiles[i][j] == Tile.WALL && tiles[i + 1][j] == Tile.WALL && tiles[i][j - 1] == Tile.WALL) { // левый верхний угол
@@ -201,25 +203,32 @@ class PathFinder {
                         vertices.add(new Vertex(tiles[i - 1][j + 1], new Vec2Float(i - 1, j + 1)));
                     } else if (tiles[i][j] == Tile.WALL && tiles[i][j + 1] == Tile.WALL && tiles[i + 1][j] == Tile.WALL) { // внутренний левый угол
                         vertices.add(new Vertex(tiles[i + 1][j + 1], new Vec2Float(i + 1, j + 1)));
-                    } else if (tiles[i][j] == Tile.PLATFORM) {                                                              // вершина над платформой
-                        vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + 1)));
-                    } else if (tiles[i][j] == Tile.LADDER) {                                                                // вершина лестницы
-                        vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
-                        if (tiles[i][j + 1] == Tile.EMPTY) {                                                                // над лестницей пусто, то это тоже вершина
-                            vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + 1)));
+                    } else
+                        */
+                    for (int z = 1; z <= 5.5; z++) {
+                        if (z + j < height - 1) {
+                            if (tiles[i][j] == Tile.PLATFORM && tiles[i][j + z] != Tile.WALL) {                                                                     // вершина над платформой
+                                vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
+                            } else if (tiles[i][j] == Tile.LADDER) {                                                                // вершина лестницы
+                                vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
+                                if (tiles[i][j + z] == Tile.EMPTY) {                                                                // над лестницей пусто, то это тоже вершина
+                                    vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + z)));
+                                }
+                            } else if (tiles[i][j+z] == Tile.EMPTY && tiles[i][j] == Tile.WALL) {                                 // вершина над стенкой
+                                vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
+                            } else if (tiles[i][j] == Tile.JUMP_PAD && tiles[i][j + z] != Tile.WALL) {                                                              // вершина джампада
+                                vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
+                            }
                         }
-                    } else if (tiles[i][j] == Tile.JUMP_PAD) {                                                              // вершина джампада
-                        vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
-                    } else if (tiles[i][j] == Tile.EMPTY && tiles[i][j - 1] == Tile.WALL) {                                 // вершина над стенкой
-                        vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
                     }
                 }
             }
         }
     }
 
+
     private static double floatDistanceSqr(Vec2Float a, Vec2Float b) {
-        return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
+        return Math.sqrt(a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
 }
 

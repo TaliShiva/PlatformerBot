@@ -110,11 +110,12 @@ public class MyStrategy {
                 nearestEnemy.getPosition().getY() - unit.getPosition().getY());
         action.setAim(aim);
 
-        if (isStupidShot(unit, nearestEnemy, game, debug)) {
+        /*if (isStupidShot(unit, nearestEnemy, game, debug)) {
             action.setShoot(false);
         } else {
             action.setShoot(true);
-        }
+        }*/
+
         //блок смены оружия, самый понятный патч, здесь мы можем описать все ситуации в которых имеется бот
         weaponSwapping(unit, nearestEnemy, nearestWeapon, action);
         //блок ответственный за минирование
@@ -125,9 +126,9 @@ public class MyStrategy {
     private UnitAction movingModule(Unit unit, Game game, Debug debug, PathFinder pf, UnitAction action, Unit nearestEnemy, Vec2Double targetPos) {
         path = pf.getPath(unit.getPosition(), targetPos, debug);
 
-        if (game.getCurrentTick() < endTaskTick) {
+        if (game.getCurrentTick() <= endTaskTick) {
             action = lastUnitAction; // патчим текущий экшен, чтобы сохранить паттерн движения
-        } else if (game.getCurrentTick() == endTaskTick) {
+        } /*else if (game.getCurrentTick() == endTaskTick) {
             action.setJump(false); // костыль ебаный. но избавляет от бесконечного дрочения в джамппаде и позволяет чётко поднимать по платформам
             if (targetPos.getX() < unit.getPosition().getX()) {
                 action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
@@ -136,7 +137,7 @@ public class MyStrategy {
             if (targetPos.getX() > unit.getPosition().getX()) {
                 action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
             }
-        } else {
+        } */ else {
             if (path.size() != 0) { // если существует путь какой-то, потому что если path - пустой, то его тупо нет
                 PathFinder.Graph.Vertex vertex = path.get(path.size() - 1).getKey(); // сейчас путь в обратном порядке записан,
                 PathFinder.Graph.Vertex nextVertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
