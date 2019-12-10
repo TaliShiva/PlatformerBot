@@ -20,29 +20,30 @@ public class MyStrategy {
         final Tile[][] lvlTiles = game.getLevel().getTiles();
 
 
-        Section sec = new Section(game);
+//        Section sec = new Section(game);
         Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
         double speedOfBullet = 0;
         if (unit.getWeapon() != null)
             speedOfBullet = unit.getWeapon().getParams().getBullet().getSpeed();
-        double safeLengthToWall = (sec.getEmptyTilesQuantity() / speedOfBullet) * game.getProperties().getUnitMaxHorizontalSpeed();
-        if (!sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > safeLengthToWall))// если нет и коллизий или если расстояние до точки взрыва
+         /*double safeLengthToWall = (sec.getEmptyLength() / speedOfBullet) * game.getProperties().getUnitMaxHorizontalSpeed();
+
+       if (!sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
+                (sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyLength() > safeLengthToWall))// если нет и коллизий или если расстояние до точки взрыва
         // большем чем
         {
             return false;
         }
         if (!sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > safeLengthToWall))// если нет и коллизий
+                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyLength() > safeLengthToWall))// если нет и коллизий
         {
             return false;
         }
         if (!sec.checkСollisionBetweenTwoDiagonalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > safeLengthToWall))// если нет и коллизий
+                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyLength() > safeLengthToWall))// если нет и коллизий
         {
             return false;
-        }
+        }*/
 
         final double distanceBetweenPlayers = distanceSqr(unit.getPosition(), nearestEnemy.getPosition());
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceBetweenPlayers > 25) {
@@ -59,7 +60,7 @@ public class MyStrategy {
         return false;
     }
 
-    private static boolean shootHorPatch(Unit unit, Unit nearestEnemy, Game game) {
+  /*  private static boolean shootHorPatch(Unit unit, Unit nearestEnemy, Game game) {
         Section sec = new Section(game);
         Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
@@ -72,7 +73,7 @@ public class MyStrategy {
         Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
         return sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision();
     }
-
+*/
     /**
      * @param unit - наш персонаж
      * @param game - контекст игры
@@ -100,7 +101,7 @@ public class MyStrategy {
 
         drawLineToTarget(unit, debug, targetPos);
 
-        action = movingModule(unit, game, debug, pf, action, nearestEnemy, targetPos);
+//        action = movingModule(unit, game, debug, pf, action, nearestEnemy, targetPos);
         backFromEnemy(game, nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
 
         //savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
@@ -122,7 +123,7 @@ public class MyStrategy {
         return action;
     }
 
-    private UnitAction movingModule(Unit unit, Game game, Debug debug, PathFinder pf, UnitAction action, Unit nearestEnemy, Vec2Double targetPos) {
+ /*   private UnitAction movingModule(Unit unit, Game game, Debug debug, PathFinder pf, UnitAction action, Unit nearestEnemy, Vec2Double targetPos) {
         path = pf.getPath(unit.getPosition(), targetPos, debug);
 
         if (game.getCurrentTick() < endTaskTick) {
@@ -187,7 +188,7 @@ public class MyStrategy {
         }
         drawLineToTarget(unit, debug, targetPos);
         return action;
-    }
+    }*/
 
 
     private void drawLineToTarget(Unit unit, Debug debug, Vec2Double targetPos) {
