@@ -93,13 +93,18 @@ public class MyStrategy {
         } else if (nearestEnemy != null) {
             targetPos = nearestEnemy.getPosition(); // если есть оружие, то пиздуй к врагу
         }
+
         targetPos = goToRocketIfNeed(unit, game, targetPos);
-        //backFromEnemy(nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
-        //savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
+        if (nearestEnemy != null && (unit.getHealth() <= 65 && nearestEnemy.getHealth() >= 30)) {
+            targetPos = nearestHealPos;
+        }
+
         drawLineToTarget(unit, debug, targetPos);
 
         action = movingModule(unit, game, debug, pf, action, nearestEnemy, targetPos);
+        backFromEnemy(game, nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
 
+        //savePlayer(unit, game, action, nearestEnemy, nearestHealPos); // спасаться приоритетней, по этому идёт позже, причём может сделать патч и на прыжок
 
         /** НЕ ОТНОСИТСЯ К ДВИЖЕНИю*/
         Vec2Double aim = new Vec2Double(nearestEnemy.getPosition().getX() - unit.getPosition().getX(),
@@ -286,12 +291,13 @@ public class MyStrategy {
         }
     }
 
-    private void backFromEnemy(Unit nearestEnemy, Unit unit, UnitAction action, double speed) {
+    private void backFromEnemy(Game game, Unit nearestEnemy, Unit unit, UnitAction action, double speed) {
 
         Vec2Double enemyPosition = nearestEnemy.getPosition();
         Vec2Double unitPosition = unit.getPosition();
 
         if (distanceSqr(unitPosition, enemyPosition) <= 30) {
+            endTaskTick = game.getCurrentTick();
             if (enemyPosition.getX() > unitPosition.getX()) {// враг правее
                 action.setVelocity(-1 * speed);
             } else if (enemyPosition.getX() < unitPosition.getX()) {//враг левее
@@ -302,19 +308,20 @@ public class MyStrategy {
 
     private void savePlayer(Unit unit, Game game, UnitAction action, Unit nearestEnemy, Vec2Double nearestHealPos) {
 
-        if (nearestEnemy != null && (unit.getHealth() <= 50 && nearestEnemy.getHealth() >= 30)) {
-            if (nearestHealPos.getX() < unit.getPosition().getX()) {
-                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
-            } else {
-                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
-            }
-            if (nearestHealPos.getY() > unit.getPosition().getY()) {
-                action.setJump(true);
-                action.setJumpDown(false);
-            } else {
-                action.setJump(false);
-                action.setJumpDown(true);
-            }
+        if (nearestEnemy != null && (unit.getHealth() <= 65 && nearestEnemy.getHealth() >= 30)) {
+
+//            if (nearestHealPos.getX() < unit.getPosition().getX()) {
+//                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
+//            } else {
+//                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
+//            }
+//            if (nearestHealPos.getY() > unit.getPosition().getY()) {
+//                action.setJump(true);
+//                action.setJumpDown(false);
+//            } else {
+//                action.setJump(false);
+//                action.setJumpDown(true);
+//            }
         }
     }
 
