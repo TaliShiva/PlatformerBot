@@ -1,9 +1,6 @@
 package model;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Set;
-import java.util.TreeSet;
+import util.StreamUtil;
 
 public enum Tile {
     EMPTY(0),
@@ -12,11 +9,7 @@ public enum Tile {
     LADDER(3),
     JUMP_PAD(4);
     public int discriminant;
-
     Tile(int discriminant) {
-        this.discriminant = discriminant;
+      this.discriminant = discriminant;
     }
-
-
-
 }
