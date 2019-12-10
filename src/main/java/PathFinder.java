@@ -1,11 +1,12 @@
-import javafx.util.Pair;
 import model.*;
-
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 class PathFinder {
+
+
+
     private static double distanceSqr(Vec2Float a, Vec2Float b) {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
