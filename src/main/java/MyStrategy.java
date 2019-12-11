@@ -8,12 +8,12 @@ public class MyStrategy {
     public static final int MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET = 20;
     static int endTaskTick = 0;
     private UnitAction lastUnitAction = new UnitAction();
-
+    double speedOfOneMove = 1d / 6d;
     private List<Pair<PathFinder.Graph.Vertex, Double>> path;
 
 
-    private static double distanceSqr(Vec2Double a, Vec2Double b) {
-        return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
+    private static double distance(Vec2Double a, Vec2Double b) {
+        return Math.sqrt(a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
 
     private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
@@ -23,7 +23,8 @@ public class MyStrategy {
         Section sec = new Section(game);
         Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
-        double speedOfBullet = 0;
+       sec.isHaveColllision();
+        /* double speedOfBullet = 0;
         if (unit.getWeapon() != null)
             speedOfBullet = unit.getWeapon().getParams().getBullet().getSpeed();
         double safeLengthToWall = (sec.getEmptyTilesQuantity() / speedOfBullet) * game.getProperties().getUnitMaxHorizontalSpeed();
@@ -44,7 +45,7 @@ public class MyStrategy {
             return false;
         }
 
-        final double distanceBetweenPlayers = distanceSqr(unit.getPosition(), nearestEnemy.getPosition());
+        final double distanceBetweenPlayers = distance(unit.getPosition(), nearestEnemy.getPosition());
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceBetweenPlayers > 25) {
             return (lvlTiles[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
                     (lvlTiles[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
@@ -55,7 +56,7 @@ public class MyStrategy {
                     (lvlTiles[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
                     (lvlTiles[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
                     (lvlTiles[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY);
-        }
+        }*/
         return false;
     }
 
@@ -110,11 +111,11 @@ public class MyStrategy {
                 nearestEnemy.getPosition().getY() - unit.getPosition().getY());
         action.setAim(aim);
 
-        /*if (isStupidShot(unit, nearestEnemy, game, debug)) {
+        if (isStupidShot(unit, nearestEnemy, game, debug)) {
             action.setShoot(false);
         } else {
             action.setShoot(true);
-        }*/
+        }
 
         //блок смены оружия, самый понятный патч, здесь мы можем описать все ситуации в которых имеется бот
         weaponSwapping(unit, nearestEnemy, nearestWeapon, action);
@@ -128,36 +129,23 @@ public class MyStrategy {
 
         if (game.getCurrentTick() <= endTaskTick) {
             action = lastUnitAction; // патчим текущий экшен, чтобы сохранить паттерн движения
-        } /*else if (game.getCurrentTick() == endTaskTick) {
-            action.setJump(false); // костыль ебаный. но избавляет от бесконечного дрочения в джамппаде и позволяет чётко поднимать по платформам
-            if (targetPos.getX() < unit.getPosition().getX()) {
-                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
+        } else if (game.getCurrentTick() == endTaskTick) {
+            if (unit.isOnGround()) {
+                action.setJump(false);
             }
-            //движение вправо
-            if (targetPos.getX() > unit.getPosition().getX()) {
-                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
-            }
-        } */ else {
+        } else {
             if (path.size() != 0) { // если существует путь какой-то, потому что если path - пустой, то его тупо нет
                 PathFinder.Graph.Vertex vertex = path.get(path.size() - 1).getKey(); // сейчас путь в обратном порядке записан,
                 PathFinder.Graph.Vertex nextVertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
-                final int tickCountToCongratulateHorizontalMove = getTickCountToCongratulateTask(game, unit, nextVertex.getPosition()); // считаем количество тиков до конца таска
-                final int tickCountToCongratulateVerticalMove = getTickCountToFinishJump(game, unit, nextVertex.getPosition());
-                if (tickCountToCongratulateVerticalMove > 1) {
-                    endTaskTick = game.getCurrentTick() + tickCountToCongratulateVerticalMove;
-                } else {
-                    endTaskTick = game.getCurrentTick() + tickCountToCongratulateHorizontalMove; // храним тик, на котором доделается задание, чтобы после этого применять другие паттерны действий
-                }
-                // нужно придумать как бы moveTask, класс храняющи последовательность действий
-                // ниже идёт его прототип для работы с ближайшей по логике движения вершиной
-
+                final int tickCountToCongratulateMove = getTickCountToCongratulateTask(game, unit, new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY())); // считаем количество тиков до конца таска
+                endTaskTick = game.getCurrentTick() + tickCountToCongratulateMove;
                 targetPos = new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
                 // движение влево
-                if (targetPos.getX() < unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
+                if (targetPos.getX() < unit.getPosition().getX()) {
                     action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
                 }
                 //движение вправо
-                if (targetPos.getX() > unit.getPosition().getX() && Math.abs(targetPos.getX() - unit.getPosition().getX()) >= 0.05) {
+                if (targetPos.getX() > unit.getPosition().getX()) {
                     action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
                 }
                 //если цель выше, то прыгай
@@ -197,19 +185,10 @@ public class MyStrategy {
         debug.draw(new CustomData.Line(debugUnitPoint, debugTargetPoint, 0.2f, new ColorFloat(100, 0, 0, 100)));
     }
 
-    private int getTickCountToCongratulateTask(Game game, Unit unit, Vec2Float endPos) {
-        double speedOfOneMove = 1d / 60d;
-        double lengthOnOneTick = speedOfOneMove * game.getProperties().getUnitMaxHorizontalSpeed();
-
-        return (int) ((Math.abs(unit.getPosition().getX() - endPos.getX()) / lengthOnOneTick) + 1);
+    private int getTickCountToCongratulateTask(Game game, Unit unit, Vec2Double endPos) {
+        return (int) ((distance(unit.getPosition(), endPos) / speedOfOneMove) + 1);
     }
 
-    private int getTickCountToFinishJump(Game game, Unit unit, Vec2Float endPos) {
-        double lengthOnOneTick = 10d / 60d;
-        int tickToFinishJump = (int) ((Math.abs(unit.getPosition().getY() - endPos.getY()) / lengthOnOneTick) + 1);
-
-        return tickToFinishJump;
-    }
 
     private Vec2Double getNearestHealPos(Unit unit, Game game, PathFinder pf, Debug debug) {
         Vec2Double nearestHealPos = new Vec2Double(0, 0);
@@ -217,7 +196,7 @@ public class MyStrategy {
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem() instanceof Item.HealthPack) { // если лутбокс это аптечка
                 //double distance = pf.getPathLength(pf.getPath(unit.getPosition(), lootBox.getPosition(), debug));
-                final double distance = distanceSqr(lootBox.getPosition(), unit.getPosition());
+                final double distance = distance(lootBox.getPosition(), unit.getPosition());
                 if (length > distance) { // если у неё
                     length = distance;
                     nearestHealPos = lootBox.getPosition();
@@ -231,8 +210,8 @@ public class MyStrategy {
         LootBox nearestWeapon = null;
         for (LootBox lootBox : game.getLootBoxes()) {
             if (lootBox.getItem() instanceof Item.Weapon) { // если лутбокс это оружие, то
-                if (nearestWeapon == null || distanceSqr(unit.getPosition(),
-                        lootBox.getPosition()) < distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) {
+                if (nearestWeapon == null || distance(unit.getPosition(),
+                        lootBox.getPosition()) < distance(unit.getPosition(), nearestWeapon.getPosition())) {
                     nearestWeapon = lootBox;
                 }
             }
@@ -245,8 +224,8 @@ public class MyStrategy {
         Unit nearestEnemy = null;
         for (Unit other : game.getUnits()) {
             if (other.getPlayerId() != unit.getPlayerId()) {
-                if (nearestEnemy == null || distanceSqr(unit.getPosition(),
-                        other.getPosition()) < distanceSqr(unit.getPosition(), nearestEnemy.getPosition())) {
+                if (nearestEnemy == null || distance(unit.getPosition(),
+                        other.getPosition()) < distance(unit.getPosition(), nearestEnemy.getPosition())) {
                     nearestEnemy = other;
                 }
             }
@@ -271,7 +250,7 @@ public class MyStrategy {
         if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.PISTOL) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestWeapon.getPosition() != null && nearestEnemy.getHealth() >= MIN_ENEMY_HEALTH_FOR_SHOOTING_ROCKET &&
-                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && (distanceSqr(unit.getPosition(), nearestWeapon.getPosition())) <= 1) {
+                unit.getWeapon().getTyp() == WeaponType.ASSAULT_RIFLE && (distance(unit.getPosition(), nearestWeapon.getPosition())) <= 1) {
             action.setSwapWeapon(true);
         } else if (unit.getWeapon() != null && nearestEnemy.getHealth() <= MIN_ENEMY_HEALTH_FOR_CHANGE_ROCKET && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER) {
             if (nearestWeapon.getItem() instanceof Item.Weapon && ((Item.Weapon) nearestWeapon.getItem()).getWeaponType() == WeaponType.ASSAULT_RIFLE)
@@ -296,7 +275,7 @@ public class MyStrategy {
         Vec2Double enemyPosition = nearestEnemy.getPosition();
         Vec2Double unitPosition = unit.getPosition();
 
-        if (distanceSqr(unitPosition, enemyPosition) <= 30) {
+        if (distance(unitPosition, enemyPosition) <= 15) {
             endTaskTick = game.getCurrentTick();
             if (enemyPosition.getX() > unitPosition.getX()) {// враг правее
                 action.setVelocity(-1 * speed);
