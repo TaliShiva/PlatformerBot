@@ -16,62 +16,17 @@ public class MyStrategy {
         return Math.sqrt(a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
 
-    private static boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
+    private boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
         final Tile[][] lvlTiles = game.getLevel().getTiles();
-
-
-        Section sec = new Section(game);
+        Section sec = new Section(lvlTiles);
         Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
         Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
-       sec.isHaveColllision();
-        /* double speedOfBullet = 0;
-        if (unit.getWeapon() != null)
-            speedOfBullet = unit.getWeapon().getParams().getBullet().getSpeed();
-        double safeLengthToWall = (sec.getEmptyTilesQuantity() / speedOfBullet) * game.getProperties().getUnitMaxHorizontalSpeed();
-        if (!sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > safeLengthToWall))// если нет и коллизий или если расстояние до точки взрыва
-        // большем чем
-        {
+        drawLineToTarget(unit, debug, nearestEnemy.getPosition());
+        if (sec.checkCollision(unit.getPosition(), nearestEnemy.getPosition())) {
+            return true;
+        } else {
             return false;
         }
-        if (!sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > safeLengthToWall))// если нет и коллизий
-        {
-            return false;
-        }
-        if (!sec.checkСollisionBetweenTwoDiagonalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() ||
-                (sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision() && sec.getEmptyTilesQuantity() > safeLengthToWall))// если нет и коллизий
-        {
-            return false;
-        }
-
-        final double distanceBetweenPlayers = distance(unit.getPosition(), nearestEnemy.getPosition());
-        if (unit.getWeapon() != null && unit.getWeapon().getTyp() == WeaponType.ROCKET_LAUNCHER && distanceBetweenPlayers > 25) {
-            return (lvlTiles[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY())] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX() + 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX() - 1)][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() + 1)] != Tile.EMPTY) ||
-                    (lvlTiles[(int) (unit.getPosition().getX())][(int) (unit.getPosition().getY() - 1)] != Tile.EMPTY);
-        }*/
-        return false;
-    }
-
-    private static boolean shootHorPatch(Unit unit, Unit nearestEnemy, Game game) {
-        Section sec = new Section(game);
-        Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
-        Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
-        return sec.checkCollisionBetweenTwoHorizontalPositions(floatUnitPos, floatEnemyPos).isHaveColllision();
-    }
-
-    private static boolean shootVerPatch(Unit unit, Unit nearestEnemy, Game game) {
-        Section sec = new Section(game);
-        Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
-        Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
-        return sec.checkСollisionBetweenTwoVerticalPositions(floatUnitPos, floatEnemyPos).isHaveColllision();
     }
 
     /**
