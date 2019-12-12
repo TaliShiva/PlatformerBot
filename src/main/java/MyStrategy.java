@@ -83,50 +83,46 @@ public class MyStrategy {
 
     private UnitAction movingModule(Unit unit, Game game, Debug debug, PathFinder pf, UnitAction action, Unit nearestEnemy, Vec2Double targetPos) {
         path = pf.getPath(unit.getPosition(), targetPos, debug);
-
-        if (game.getCurrentTick() < endTaskTick) {
-            action = lastUnitAction; // патчим текущий экшен, чтобы сохранить паттерн движения
-        } /*else if (game.getCurrentTick() == endTaskTick) {
-            if (unit.isStand()) {
-                action.setJump(false);
+        if (path.size() != 0) { // если существует путь какой-то, потому что если path - пустой, то его тупо нет
+            PathFinder.Graph.Vertex vertex = path.get(path.size() - 1).getKey(); // сейчас путь в обратном порядке записан,
+            PathFinder.Graph.Vertex nextVertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
+            final int tickCountToCongratulateMove = getTickCountToCongratulateTask(game, vertex.getPosition(), new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY())); // считаем количество тиков до конца таска
+            endTaskTick = game.getCurrentTick() + tickCountToCongratulateMove;
+            targetPos = new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
+            // движение влево
+            if (targetPos.getX() < unit.getPosition().getX()) {
+                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
             }
-        }*/ else {
-            if (path.size() != 0) { // если существует путь какой-то, потому что если path - пустой, то его тупо нет
-                PathFinder.Graph.Vertex vertex = path.get(path.size() - 1).getKey(); // сейчас путь в обратном порядке записан,
-                PathFinder.Graph.Vertex nextVertex = path.get(path.size() - 2).getKey(); // сейчас путь в обратном порядке записан,
-                final int tickCountToCongratulateMove = getTickCountToCongratulateTask(game, unit, new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY())); // считаем количество тиков до конца таска
-                endTaskTick = game.getCurrentTick() + tickCountToCongratulateMove;
-                targetPos = new Vec2Double(nextVertex.getPosition().getX(), nextVertex.getPosition().getY()); //задаём цель движения и по паттернам будем придумывать движения
-                // движение влево
-                if (targetPos.getX() < unit.getPosition().getX()) {
-                    action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
-                }
-                //движение вправо
-                if (targetPos.getX() > unit.getPosition().getX()) {
-                    action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
-                }
-                //если цель выше, то прыгай
-                if (targetPos.getY() > unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
-                    action.setJump(true);
-                }
-                //если цель ниже, то прыгай вниз
-                if (targetPos.getY() < unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
-                    action.setJumpDown(true);
-                }
-                lastUnitAction = action;// сохраняем ссылку на последний экшен
-
-            } else {
-                System.out.printf("поиск пути отказал %d\n", game.getCurrentTick());
-                // подстраховка на случай отказывания основного алгоритма
-                if (targetPos.getX() < unit.getPosition().getX()) {
-                    action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
-                }
-                if (targetPos.getX() > unit.getPosition().getX()) {
-                    action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
-                }
+            //движение вправо
+            if (targetPos.getX() > unit.getPosition().getX()) {
+                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
             }
+            //если цель выше, то прыгай
+            if (targetPos.getY() > unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
+                action.setJump(true);
+            }
+            //если цель ниже, то прыгай вниз
+            if (targetPos.getY() < unit.getPosition().getY() && unit.getJumpState().isCanJump()) {
+                action.setJumpDown(true);
+            }
+            lastUnitAction = action;// сохраняем ссылку на последний экшен
+
+        } else {
+            System.out.printf("поиск пути отказал %d\n", game.getCurrentTick());
+            pf = new PathFinder(game, debug);
+            // подстраховка на случай отказывания основного алгоритма
+            if (targetPos.getX() < unit.getPosition().getX()) {
+                action.setVelocity(-1 * game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+            if (targetPos.getX() > unit.getPosition().getX()) {
+                action.setVelocity(game.getProperties().getUnitMaxHorizontalSpeed());
+            }
+
         }
-        drawLineToTarget(unit.getPosition(), targetPos, debug, new ColorFloat(100, 0, 100, 100));
+
+        drawLineToTarget(unit.getPosition(), targetPos, debug, new
+
+                ColorFloat(100, 0, 100, 100));
         return action;
     }
 
@@ -137,8 +133,8 @@ public class MyStrategy {
         debug.draw(new CustomData.Line(debugUnitPoint, debugTargetPoint, 0.2f, color));
     }
 
-    private int getTickCountToCongratulateTask(Game game, Unit unit, Vec2Double endPos) {
-        return (int) ((doubleDistance(unit.getPosition(), endPos) / lengthOnOneTick));
+    private int getTickCountToCongratulateTask(Game game, Vec2Double startPos, Vec2Double endPos) {
+        return (int) ((doubleDistance(startPos, endPos) / lengthOnOneTick));
     }
 
 

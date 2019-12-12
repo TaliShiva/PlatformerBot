@@ -1,11 +1,10 @@
 import model.*;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import static util.Constants.floatDistance;
+import static util.Constants.*;
 
 class PathFinder {
 
@@ -27,10 +26,12 @@ class PathFinder {
 
     public List<Pair<Graph.Vertex, Double>> getPath(Vec2Double startPosition, Vec2Double finishPosition, Debug debug) {
         //сперва притягиваем позицию к ближайшей вершине в графе
-        Graph.Vertex startVer = relaxateFinPos(startPosition, finishPosition);
-        debug.draw(new CustomData.Line(new Vec2Float((float) startPosition.getX(), (float) startPosition.getY()), startVer.getPosition(), 0.2f, new ColorFloat(0, 0, 0, 100)));
+        Graph.Vertex startVer = relaxatePos(startPosition);
+        debug.draw(new CustomData.Line(new Vec2Float((float) startPosition.getX(), (float) startPosition.getY()),
+                new Vec2Float((float) startVer.getPosition().getX(), (float) startVer.getPosition().getY()),
+                0.2f, new ColorFloat(0, 0, 0, 100)));
 
-        Graph.Vertex finVer = relaxateFinPos(finishPosition, finishPosition);
+        Graph.Vertex finVer = relaxatePos(finishPosition);
         List<Pair<Graph.Vertex, Double>> path = new ArrayList<>();
         List<Graph.Vertex> nonCheckedVertecies = new ArrayList<>();
         startVer.setParent(null, 0);
@@ -44,13 +45,15 @@ class PathFinder {
                 }
                 v.getKey().isVisited = true; //если не бывали ещё в ней, то отмечаем тут, что побывали
                 v.getKey().setParent(currentVertex, v.getValue()); // поместили длину ещё до предка
-                if (v.getKey() == finVer) { // если нашли финальную вершину, то
+                if (v.getKey().getPosition() == finVer.getPosition()) { // если нашли финальную вершину, то
                     Graph.Vertex tmpVer = v.getKey();
                     Double lengthToParent = v.getValue();
                     path.add(new Pair<>(tmpVer, lengthToParent));
                     while (tmpVer.getParent().getKey() != null) {
                         path.add(tmpVer.getParent());
-                        debug.draw(new CustomData.Line(tmpVer.getPosition(), tmpVer.getParent().getKey().getPosition(), 0.2f, new ColorFloat(75, 75, 75, 100)));
+                        Vec2Float debugV = new Vec2Float((float) tmpVer.getPosition().getX(), (float) tmpVer.getPosition().getY());
+                        Vec2Float debugPV = new Vec2Float((float) tmpVer.getParent().getKey().getPosition().getX(), (float) tmpVer.getParent().getKey().getPosition().getY());
+                        debug.draw(new CustomData.Line(debugV, debugPV, 0.2f, new ColorFloat(75, 75, 75, 100)));
                         tmpVer = tmpVer.getParent().getKey();
                         lengthToParent = tmpVer.getParent().getValue();
                     }
@@ -59,8 +62,9 @@ class PathFinder {
                 nonCheckedVertecies.add(v.getKey()); // обновляем список
             }
         }
-        for (int i = 0; i < path.size(); i++) {
-            path.get(i).getKey().isVisited = false;
+
+        for (Graph.Vertex v : graph.vertices.values()) {
+            v.isVisited = false;
         }
         return path;
     }
@@ -73,13 +77,12 @@ class PathFinder {
         return pathLength;
     }
 
-    private Graph.Vertex relaxateFinPos(Vec2Double startPosition, Vec2Double finishPosition) {
-        Vec2Float floatFinishPosition = new Vec2Float((float) startPosition.getX(), (float) startPosition.getY());
+    private Graph.Vertex relaxatePos(Vec2Double startPosition) {
         Graph.Vertex ver = null;
         double distance = 1000;
         for (Graph.Vertex v : graph.vertices.values()) {
-            if (distanceSqr(floatFinishPosition, v.position) < distance) {
-                distance = distanceSqr(floatFinishPosition, v.position);
+            if (doubleDistance(startPosition, v.getPosition()) < distance) {
+                distance = doubleDistance(startPosition, v.position);
                 ver = v;
             }
         }
@@ -87,24 +90,24 @@ class PathFinder {
     }
 
     public class Graph {
-        HashMap<Vec2Float, Vertex> vertices = new HashMap<>();
+        HashMap<Vec2Double, Vertex> vertices = new HashMap<>();
 
         // точка нужна, чтобы по ней получить в итоге путь до стартовой точки
         public class Vertex {
             //первый элемент
 
             private Tile startTile;
-            private Vec2Float position;
+            private Vec2Double position;
             private boolean isVisited = false;
             private Pair<Vertex, Double> parent; //ссылка на предыдущую ноду и расстояние до неё
             private ArrayList<Pair<Vertex, Double>> neighbours = new ArrayList<>(); // соседние вершины хранятся в виде пары, конкретной вершины и стоимости туда передвижения
 
-            Vertex(Tile startTile, Vec2Float position) {
+            Vertex(Tile startTile, Vec2Double position) {
                 this.startTile = startTile;
                 this.position = position;
             }
 
-            public Vec2Float getPosition() {
+            public Vec2Double getPosition() {
                 return position;
             }
 
@@ -137,24 +140,26 @@ class PathFinder {
 
         private void debugDrawing(Debug debug) {
             for (Vertex v : vertices.values()) {
-                debug.draw(new CustomData.Rect(v.getPosition(), new Vec2Float(0.5f, 0.5f), new ColorFloat(100, 100, 0, 100)));
+                Vec2Float debugV = new Vec2Float((float) v.getPosition().getX(), (float) v.getPosition().getY());
+                debug.draw(new CustomData.Rect(debugV, new Vec2Float(0.5f, 0.5f), new ColorFloat(100, 100, 0, 100)));
                 for (Pair<Vertex, Double> nv : v.getNeighbours()) {
-                    debug.draw(new CustomData.Line(v.position, nv.getKey().position, 0.07f, new ColorFloat(100, 0, 100, 100)));
+                    Vec2Float debugNV = new Vec2Float((float) nv.getKey().getPosition().getX(), (float) nv.getKey().getPosition().getY());
+                    debug.draw(new CustomData.Line(debugV, debugNV, 0.07f, new ColorFloat(100, 0, 100, 100)));
                 }
             }
         }
 
         private void CreateAllEdges() {
 
-            for (int i = 0; i < vertices.size(); i++) {
-                Vertex vertex = vertices.get(i);
-                for (int j = 0; j < vertices.size(); j++) {
-                    Vertex nextVertex = vertices.get(j);
-                    double length = floatDistance(vertex.getPosition(), nextVertex.getPosition());
+            for (Vertex vertex : vertices.values()) {
+//                for (int j = 0; j < vertices.values().size(); j++) {
+                for (Vertex nextVertex : vertices.values()) {
+//                    Vertex nextVertex = vertices.get(j);
+                    double length = doubleDistance(vertex.getPosition(), nextVertex.getPosition());
                     if (nextVertex == vertex) {
                         continue; // дабы избежать петель
                     }
-                    if (length <= 2) {
+                    if (length - Math.sqrt(2) <= EPS) {
                         vertex.setNeighbour(nextVertex, length);
                     }
                 }
@@ -169,40 +174,38 @@ class PathFinder {
                 int height = tiles[i].length;
                 for (int j = 0; j < height - 1; j++) {
                     for (int z = 1; z <= 5.5; z++) {
-                        if (z + j < height - 1) {
+                        if (j + z < height - 1) {
                             if (tiles[i][j] == Tile.PLATFORM && tiles[i][j + 1] != Tile.WALL) {                          // вершина над платформой
-                                Vec2Float position = new Vec2Float(i, j + z);
+                                Vec2Double position = new Vec2Double(i, j + z);
                                 vertices.put(position, new Vertex(tiles[i][j + z], position));
                             } else if (tiles[i][j] == Tile.LADDER) {
-                                Vec2Float position = new Vec2Float(i, j + z);// вершина лестницы
-                                vertices.put(position,new Vertex(tiles[i][j], position);
-                                if (tiles[i][j + z] == Tile.EMPTY) {                                                     // над лестницей пусто, то это тоже вершина
-                                    vertices.add(new Vertex(tiles[i][j + 1],position ));
-                                }
-                                if (z + i < width - 1 && tiles[i + z][j] == Tile.EMPTY) {                              //покрытие пространства справа от лестницы
-                                    vertices.add(new Vertex(tiles[i + z][j], new Vec2Float(i + z, j)));
-                                }
-                                if (i - z > 0 && tiles[i - z][j] == Tile.EMPTY) {
-                                    vertices.add(new Vertex(tiles[i - z][j], new Vec2Float(i - z, j)));              //покрытие пространства слева от лестницы
-                                }
-
+                                Vec2Double position = new Vec2Double(i, j);// вершина лестницы
+                                vertices.put(position, new Vertex(tiles[i][j], position));
+                            } else if (tiles[i][j] == Tile.LADDER && tiles[i][j + z] == Tile.EMPTY) {
+                                Vec2Double position = new Vec2Double(i, j + z);// над лестницей пусто, то это тоже вершина
+                                vertices.put(position, new Vertex(tiles[i][j + z], position));
+                            } else if (tiles[i][j] == Tile.LADDER && z + i < width - 1 && tiles[i + z][j] == Tile.EMPTY) {
+                                vertices.put(new Vec2Double(i + z, j), new Vertex(tiles[i][j + 1], new Vec2Double(i + z, j)));
+                            } else if (tiles[i][j] == Tile.LADDER && i - z > 0 && tiles[i - z][j] == Tile.EMPTY) {
+                                vertices.put(new Vec2Double(i - z, j), new Vertex(tiles[i][j + 1], new Vec2Double(i - z, j)));
                             } else if (tiles[i][j + z] != Tile.WALL && tiles[i][j] == Tile.WALL) {                       // вершина над стенкой
-                                vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
+                                vertices.put(new Vec2Double(i, j + z), new Vertex(tiles[i][j + 1], new Vec2Double(i, j + z)));
                             }
                         }
+
                     }
-
-                    for (int z = 1; z <= 11; z++) {
-                        if (z + j < height - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i][j + z] != Tile.WALL) {        // вершина джампада
-                            vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
+                    if (tiles[i][j] == Tile.JUMP_PAD) {
+                        for (int z = 1; z <= 11; z++) {
+                            if (z + j < height - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i][j + z] != Tile.WALL) {        // вершина джампада
+                                vertices.put(new Vec2Double(i, j + z), new Vertex(tiles[i][j + z], new Vec2Double(i, j + z)));
+                            }
+                            if (i - z > 0 && tiles[i][j] == Tile.JUMP_PAD && tiles[i - z][j] != Tile.WALL) {
+                                vertices.put(new Vec2Double(i - z, j), new Vertex(tiles[i - z][j], new Vec2Double(i - z, j)));
+                            }
+                            if (i + z < width - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i + z][j] != Tile.WALL) {
+                                vertices.put(new Vec2Double(i + z, j), new Vertex(tiles[i + z][j], new Vec2Double(i + z, j)));
+                            }
                         }
-                        if (i - z > 0 && tiles[i][j] == Tile.JUMP_PAD && tiles[i - z][j] != Tile.WALL) {
-                            vertices.add(new Vertex(tiles[i - z][j], new Vec2Float(i - z, j)));
-                        }
-                        if (i + z < width - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i + z][j] != Tile.WALL) {
-                            vertices.add(new Vertex(tiles[i + z][j], new Vec2Float(i + z, j)));
-                        }
-
                     }
                 }
             }
