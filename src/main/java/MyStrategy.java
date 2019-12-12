@@ -17,12 +17,14 @@ public class MyStrategy {
     }
 
     private boolean isStupidShot(Unit unit, Unit nearestEnemy, Game game, Debug debug) throws IOException {
+
         final Tile[][] lvlTiles = game.getLevel().getTiles();
         Section sec = new Section(lvlTiles);
-        Vec2Float floatUnitPos = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
-        Vec2Float floatEnemyPos = new Vec2Float((float) nearestEnemy.getPosition().getX(), (float) nearestEnemy.getPosition().getY());
-        drawLineToTarget(unit, debug, nearestEnemy.getPosition());
-        if (sec.checkCollision(unit.getPosition(), nearestEnemy.getPosition())) {
+        Vec2Double unitCenter = new Vec2Double(unit.getPosition().getX(), unit.getPosition().getY() + 1);
+        Vec2Double enemyCenter = new Vec2Double(nearestEnemy.getPosition().getX(), nearestEnemy.getPosition().getY() + 1);
+        drawLineToTarget(unitCenter, enemyCenter, debug);
+
+        if (sec.checkCollision(unitCenter, enemyCenter)) {
             return true;
         } else {
             return false;
@@ -54,7 +56,7 @@ public class MyStrategy {
             targetPos = nearestHealPos;
         }
 
-        drawLineToTarget(unit, debug, targetPos);
+        drawLineToTarget(unit.getPosition(), targetPos, debug);
 
         action = movingModule(unit, game, debug, pf, action, nearestEnemy, targetPos);
         backFromEnemy(game, nearestEnemy, unit, action, game.getProperties().getUnitMaxHorizontalSpeed()); //просто меняет полярность движения если близко к сопернику
@@ -129,13 +131,13 @@ public class MyStrategy {
                 action.setJumpDown(!jump);
             }
         }
-        drawLineToTarget(unit, debug, targetPos);
+        drawLineToTarget(unit.getPosition(), targetPos, debug);
         return action;
     }
 
 
-    private void drawLineToTarget(Unit unit, Debug debug, Vec2Double targetPos) {
-        Vec2Float debugUnitPoint = new Vec2Float((float) unit.getPosition().getX(), (float) unit.getPosition().getY());
+    private void drawLineToTarget(Vec2Double startPos, Vec2Double targetPos, Debug debug) {
+        Vec2Float debugUnitPoint = new Vec2Float((float) startPos.getX(), (float) startPos.getY());
         Vec2Float debugTargetPoint = new Vec2Float((float) targetPos.getX(), (float) targetPos.getY());
         debug.draw(new CustomData.Line(debugUnitPoint, debugTargetPoint, 0.2f, new ColorFloat(100, 0, 0, 100)));
     }

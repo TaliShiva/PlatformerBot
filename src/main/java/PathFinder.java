@@ -127,7 +127,7 @@ class PathFinder {
         Graph( Debug debug){
             CreateAllVertex();
             CreateAllEdges();
-            debugDrawing(debug);
+//            debugDrawing(debug);
         }
 
         private void debugDrawing(Debug debug) {
