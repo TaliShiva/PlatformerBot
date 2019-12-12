@@ -3,9 +3,10 @@ import model.Tile;
 import model.Vec2Double;
 import model.Vec2Float;
 
+import static util.Constants.lengthOnOneTick;
+
 public class Section {
     private Tile[][] tiles;
-    private double lengthOnOneTick = 1d / 6d;
     private double height;
     private double width;
 

@@ -2,7 +2,10 @@ import model.*;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+
+import static util.Constants.floatDistance;
 
 class PathFinder {
 
@@ -11,7 +14,7 @@ class PathFinder {
         return (a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
     }
 
-    private static final float EPS = 1e-6f;
+
     private Tile[][] tiles;
     private Graph graph;
 
@@ -56,6 +59,9 @@ class PathFinder {
                 nonCheckedVertecies.add(v.getKey()); // обновляем список
             }
         }
+        for (int i = 0; i < path.size(); i++) {
+            path.get(i).getKey().isVisited = false;
+        }
         return path;
     }
 
@@ -71,9 +77,8 @@ class PathFinder {
         Vec2Float floatFinishPosition = new Vec2Float((float) startPosition.getX(), (float) startPosition.getY());
         Graph.Vertex ver = null;
         double distance = 1000;
-        for (Graph.Vertex v : graph.vertices) {
+        for (Graph.Vertex v : graph.vertices.values()) {
             if (distanceSqr(floatFinishPosition, v.position) < distance) {
-//            if (Math.abs(floatFinishPosition.getX() + v.getPosition().getX()) < distance) {
                 distance = distanceSqr(floatFinishPosition, v.position);
                 ver = v;
             }
@@ -82,7 +87,7 @@ class PathFinder {
     }
 
     public class Graph {
-        List<Vertex> vertices = new ArrayList<>();
+        HashMap<Vec2Float, Vertex> vertices = new HashMap<>();
 
         // точка нужна, чтобы по ней получить в итоге путь до стартовой точки
         public class Vertex {
@@ -124,14 +129,14 @@ class PathFinder {
         /**
          * Создание графа доступных для движений точек, с учётом коллизий от стен
          */
-        Graph( Debug debug){
+        Graph(Debug debug) {
             CreateAllVertex();
             CreateAllEdges();
-//            debugDrawing(debug);
+            debugDrawing(debug);
         }
 
         private void debugDrawing(Debug debug) {
-            for (Vertex v : vertices) {
+            for (Vertex v : vertices.values()) {
                 debug.draw(new CustomData.Rect(v.getPosition(), new Vec2Float(0.5f, 0.5f), new ColorFloat(100, 100, 0, 100)));
                 for (Pair<Vertex, Double> nv : v.getNeighbours()) {
                     debug.draw(new CustomData.Line(v.position, nv.getKey().position, 0.07f, new ColorFloat(100, 0, 100, 100)));
@@ -145,7 +150,7 @@ class PathFinder {
                 Vertex vertex = vertices.get(i);
                 for (int j = 0; j < vertices.size(); j++) {
                     Vertex nextVertex = vertices.get(j);
-                    double length = floatDistanceSqr(vertex.getPosition(), nextVertex.getPosition());
+                    double length = floatDistance(vertex.getPosition(), nextVertex.getPosition());
                     if (nextVertex == vertex) {
                         continue; // дабы избежать петель
                     }
@@ -165,31 +170,33 @@ class PathFinder {
                 for (int j = 0; j < height - 1; j++) {
                     for (int z = 1; z <= 5.5; z++) {
                         if (z + j < height - 1) {
-                            if (tiles[i][j] == Tile.PLATFORM && tiles[i][j + 1] != Tile.WALL) {                                                                     // вершина над платформой
-                                vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
-                            } else if (tiles[i][j] == Tile.LADDER) {                                                                // вершина лестницы
-                                vertices.add(new Vertex(tiles[i][j], new Vec2Float(i, j)));
-                                if (tiles[i][j + z] == Tile.EMPTY) {                                                                // над лестницей пусто, то это тоже вершина
-                                    vertices.add(new Vertex(tiles[i][j + 1], new Vec2Float(i, j + z)));
+                            if (tiles[i][j] == Tile.PLATFORM && tiles[i][j + 1] != Tile.WALL) {                          // вершина над платформой
+                                Vec2Float position = new Vec2Float(i, j + z);
+                                vertices.put(position, new Vertex(tiles[i][j + z], position));
+                            } else if (tiles[i][j] == Tile.LADDER) {
+                                Vec2Float position = new Vec2Float(i, j + z);// вершина лестницы
+                                vertices.put(position,new Vertex(tiles[i][j], position);
+                                if (tiles[i][j + z] == Tile.EMPTY) {                                                     // над лестницей пусто, то это тоже вершина
+                                    vertices.add(new Vertex(tiles[i][j + 1],position ));
                                 }
-                                if ( z + i < width - 1 && tiles[i + z][j] == Tile.EMPTY) {
+                                if (z + i < width - 1 && tiles[i + z][j] == Tile.EMPTY) {                              //покрытие пространства справа от лестницы
                                     vertices.add(new Vertex(tiles[i + z][j], new Vec2Float(i + z, j)));
                                 }
                                 if (i - z > 0 && tiles[i - z][j] == Tile.EMPTY) {
-                                    vertices.add(new Vertex(tiles[i - z][j], new Vec2Float(i - z, j)));
+                                    vertices.add(new Vertex(tiles[i - z][j], new Vec2Float(i - z, j)));              //покрытие пространства слева от лестницы
                                 }
 
-                            } else if (tiles[i][j + z] != Tile.WALL && tiles[i][j] == Tile.WALL) {                                 // вершина над стенкой
+                            } else if (tiles[i][j + z] != Tile.WALL && tiles[i][j] == Tile.WALL) {                       // вершина над стенкой
                                 vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
                             }
                         }
                     }
 
                     for (int z = 1; z <= 11; z++) {
-                        if (z + j < height - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i][j + z] != Tile.WALL) {                                                              // вершина джампада
+                        if (z + j < height - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i][j + z] != Tile.WALL) {        // вершина джампада
                             vertices.add(new Vertex(tiles[i][j + z], new Vec2Float(i, j + z)));
                         }
-                        if( i - z > 0 && tiles[i][j] == Tile.JUMP_PAD && tiles[i - z][j] != Tile.WALL){
+                        if (i - z > 0 && tiles[i][j] == Tile.JUMP_PAD && tiles[i - z][j] != Tile.WALL) {
                             vertices.add(new Vertex(tiles[i - z][j], new Vec2Float(i - z, j)));
                         }
                         if (i + z < width - 1 && tiles[i][j] == Tile.JUMP_PAD && tiles[i + z][j] != Tile.WALL) {
@@ -199,14 +206,10 @@ class PathFinder {
                     }
                 }
             }
+
         }
 
     }
 
-
-    private double floatDistanceSqr(Vec2Float a, Vec2Float b) {
-        return Math.sqrt(a.getX() - b.getX()) * (a.getX() - b.getX()) + (a.getY() - b.getY()) * (a.getY() - b.getY());
-
-    }
 
 }
