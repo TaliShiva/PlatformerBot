@@ -5,6 +5,7 @@ import model.Vec2Float;
 
 public interface Constants {
     static float EPS = 1e-6f;
+    static float TINE_EPS = 1e-9f;
     static double lengthOnOneTick = 1d / 6d;
 
     static double floatDistance(Vec2Float a, Vec2Float b) {
